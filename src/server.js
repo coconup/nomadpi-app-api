@@ -1,7 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const mysql = require('mysql2');
-const crypto = require('crypto');
 const knex = require('knex');
 
 const app = express();
@@ -34,16 +33,21 @@ knexInstance.migrate.latest().then(() => {
 
   // Function to encrypt data
   function encryptData(data) {
-    const cipher = crypto.createCipher('aes-256-cbc', encryptionKey);
+    const key = crypto.scryptSync(process.env.ENCRYPTION_KEY, 'salt', 32);
+    const iv = crypto.randomBytes(16);
+    const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
     let encrypted = cipher.update(JSON.stringify(data), 'utf-8', 'hex');
     encrypted += cipher.final('hex');
-    return encrypted;
+    return `${iv.toString('hex')}:${encrypted}`;
   }
 
   // Function to decrypt data
   function decryptData(encryptedData) {
-    const decipher = crypto.createDecipher('aes-256-cbc', encryptionKey);
-    let decrypted = decipher.update(encryptedData, 'hex', 'utf-8');
+    const key = crypto.scryptSync(process.env.ENCRYPTION_KEY, 'salt', 32);
+    const [ivHex, encryptedText] = encryptedData.split(':');
+    const iv = Buffer.from(ivHex, 'hex');
+    const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
+    let decrypted = decipher.update(encryptedText, 'hex', 'utf-8');
     decrypted += decipher.final('utf-8');
     return JSON.parse(decrypted);
   }
