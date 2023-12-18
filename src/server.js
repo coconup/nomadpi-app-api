@@ -161,11 +161,12 @@ knexInstance.migrate.latest().then(() => {
     });
   }
 
-  // Create CRUD endpoints for "switchables"
-  createCrudEndpoints('relay_switches', 'relay_switches', []);
-
   // Create CRUD endpoints for "credentials" with encryption on the "payload" attribute
   createCrudEndpoints('credentials', 'credentials', ['payload']);
+
+  // Create CRUD endpoints
+  createCrudEndpoints('relay_switches', 'relay_switches', []);
+  createCrudEndpoints('action_switches', 'action_switches', []);
 
   // Start the server
   app.listen(port, () => {
