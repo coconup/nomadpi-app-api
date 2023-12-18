@@ -4,7 +4,7 @@
  */
 exports.up = function (knex) {
   return knex.schema.createTable('credentials', function (table) {
-    table.increments('credential_id').primary();
+    table.increments('id').primary();
     table.string('service_id').notNullable();
     table.string('payload');
   });

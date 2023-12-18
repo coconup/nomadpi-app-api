@@ -61,12 +61,17 @@ knexInstance.migrate.latest().then(() => {
     return JSON.parse(decrypted);
   }
 
+  function handleError(error) {
+    console.log(JSON.stringify(error))
+    return res.status(400).json({message: err.sqlMessage});
+  }
+
   // Generic CRUD function with encryption/decryption option
   function createCrudEndpoints(resourceName, tableName, encryptedAttributes = []) {
     // Get all resources
     app.get(`/${resourceName}`, (req, res) => {
       pool.query(`SELECT * FROM ${tableName}`, (err, results) => {
-        if (err) throw err;
+        if (err) return handleError(err);
 
         const decryptedResults = results.map(result => {
           if (encryptedAttributes.length > 0) {
@@ -86,7 +91,7 @@ knexInstance.migrate.latest().then(() => {
       const resourceId = parseInt(req.params.id);
 
       pool.query(`SELECT * FROM ${tableName} WHERE id = ?`, [resourceId], (err, results) => {
-        if (err) throw err;
+        if (err) return handleError(err);
 
         if (results.length === 0) {
           return res.status(404).json({ error: `${resourceName} not found` });
@@ -116,7 +121,7 @@ knexInstance.migrate.latest().then(() => {
       }
 
       pool.query(`INSERT INTO ${tableName} SET ?`, newResource, (err, results) => {
-        if (err) throw err;
+        if (err) return handleError(err);
 
         newResource.id = results.insertId;
 
@@ -138,7 +143,7 @@ knexInstance.migrate.latest().then(() => {
       const updatedResource = req.body;
 
       pool.query(`UPDATE ${tableName} SET ? WHERE id = ?`, [updatedResource, resourceId], (err) => {
-        if (err) throw err;
+        if (err) return handleError(err);
 
         res.json(updatedResource);
       });
@@ -149,7 +154,7 @@ knexInstance.migrate.latest().then(() => {
       const resourceId = parseInt(req.params.id);
 
       pool.query(`DELETE FROM ${tableName} WHERE id = ?`, resourceId, (err) => {
-        if (err) throw err;
+        if (err) return handleError(err);
 
         res.json({ message: `${resourceName} deleted successfully` });
       });
