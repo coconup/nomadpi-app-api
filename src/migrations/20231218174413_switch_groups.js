@@ -3,13 +3,11 @@
  * @returns { Promise<void> }
  */
 exports.up = function(knex) {
-  return knex.schema.createTable('relay_switches', function (table) {
+  return knex.schema.createTable('switch_groups', function (table) {
     table.increments('id').primary();
     table.string('name').notNullable();
-    table.string('target_type').notNullable();
-    table.string('target_id').notNullable();
     table.string('icon');
-    table.boolean('enabled').notNullable().defaultTo(false);
+    table.json('switches').notNullable();
   });
 };
 
@@ -18,5 +16,5 @@ exports.up = function(knex) {
  * @returns { Promise<void> }
  */
 exports.down = function(knex) {
-  return knex.schema.dropTable('relay_switches');
+  return knex.schema.dropTable('switch_groups');
 };

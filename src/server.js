@@ -167,6 +167,7 @@ knexInstance.migrate.latest().then(() => {
   // Create CRUD endpoints
   createCrudEndpoints('relay_switches', 'relay_switches', []);
   createCrudEndpoints('action_switches', 'action_switches', []);
+  createCrudEndpoints('switch_groups', 'switch_groups', []);
 
   // Start the server
   app.listen(port, () => {
