@@ -63,7 +63,7 @@ knexInstance.migrate.latest().then(() => {
 
   function handleError(error, res) {
     console.log(JSON.stringify(error))
-    return res.status(400).json({message: err.sqlMessage});
+    return res.status(400).json({message: error.sqlMessage});
   }
 
   // Generic CRUD function with encryption/decryption option
