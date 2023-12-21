@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const session = require('express-session');
+const cors = require('cors');
 const bcrypt = require('bcrypt');
 const mysql = require('mysql2');
 const knex = require('knex');
@@ -28,6 +29,14 @@ app.use(function (req, res, next) {
   // res.setHeader('Access-Control-Allow-Credentials', true);
   next();
 });
+
+app.use(
+  cors({
+    origin: "*",
+    methods: ["POST", "PUT", "GET", "OPTIONS", "HEAD"],
+    credentials: true,
+  })
+);
 
 // Create a MySQL connection pool
 const pool = mysql.createPool(databaseConfig);
@@ -103,6 +112,7 @@ knexInstance.migrate.latest().then(() => {
         // Check if the user exists and verify the password
         if (user && bcrypt.compareSync(password, user.password)) {
           req.session.user = user; // Save user data in the session
+          res.send(request.session.sessionID);
           next();
         } else {
           res.status(401).json({ error: 'Unauthorized' });
