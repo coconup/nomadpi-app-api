@@ -33,8 +33,8 @@ app.use(function (req, res, next) {
 app.use(
   cors({
     origin: [
-      "http://localhost:3000",
-      "https://app.monsterpi.net"
+      "http://localhost",
+      "http://raspberrypi.local"
     ],
     methods: ["POST", "PUT", "GET", "OPTIONS", "HEAD"],
     credentials: true,
@@ -67,7 +67,7 @@ knexInstance.migrate.latest().then(() => {
       resave: false,
       saveUninitialized: true,
       cookie: { 
-        domain: 'localhost'
+        // domain: 'localhost'
         // sameSite: 'none'
         // secure: true 
       }
