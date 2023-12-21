@@ -67,7 +67,8 @@ knexInstance.migrate.latest().then(() => {
       resave: false,
       saveUninitialized: true,
       cookie: { 
-        sameSite: 'none'
+        domain: 'localhost'
+        // sameSite: 'none'
         // secure: true 
       }
     })
