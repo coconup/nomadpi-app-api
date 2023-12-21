@@ -102,28 +102,30 @@ knexInstance.migrate.latest().then(() => {
   const authenticateUser = (req, res, next) => {
     console.log('debug', req.session)
 
-    if (req.session.user) next();
+    if (req.session.user) {
+      next();
+    } else {
+      const { username, password } = req.body;
 
-    const { username, password } = req.body;
+      // Find the user by username in the database
+      pool
+        .query('SELECT * FROM users WHERE username = ?', [username], (err, results) => {
+          if(err) {
+            console.error(err);
+            res.status(500).json({ error: 'Internal Server Error' });
+          }
 
-    // Find the user by username in the database
-    pool
-      .query('SELECT * FROM users WHERE username = ?', [username], (err, results) => {
-        if(err) {
-          console.error(err);
-          res.status(500).json({ error: 'Internal Server Error' });
-        }
+          const user = results[0];
 
-        const user = results[0];
-
-        // Check if the user exists and verify the password
-        if (user && bcrypt.compareSync(password, user.password)) {
-          req.session.user = user; // Save user data in the session
-          next();
-        } else {
-          res.status(401).json({ error: 'Unauthorized' });
-        }
-      });
+          // Check if the user exists and verify the password
+          if (user && bcrypt.compareSync(password, user.password)) {
+            req.session.user = user; // Save user data in the session
+            next();
+          } else {
+            res.status(401).json({ error: 'Unauthorized' });
+          }
+        });
+    }
   };
 
   // Auth routes
