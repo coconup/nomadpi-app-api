@@ -25,14 +25,12 @@ if(Object.values(databaseConfig).find(v => !v)) {
 app.use(function (req, res, next) {
   const corsWhitelist = [
     "http://localhost",
-    "http://raspberrypi.local"
+    "http://raspberrypi.local:3000"
   ];
 
   if (corsWhitelist.includes(req.headers.origin)) {
     res.setHeader('Access-Control-Allow-Origin', req.headers.origin);
     res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-  } else {
-    console.log(req.headers.origin)
   }
 
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
