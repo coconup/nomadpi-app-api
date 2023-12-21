@@ -23,23 +23,21 @@ if(Object.values(databaseConfig).find(v => !v)) {
 
 // Add headers before the routes are defined
 app.use(function (req, res, next) {
-  // res.setHeader('Access-Control-Allow-Origin', '*');
-  // res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
-  // res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type');
-  // res.setHeader('Access-Control-Allow-Credentials', true);
+  const corsWhitelist = [
+    "http://localhost",
+    "http://raspberrypi.local"
+  ];
+
+  if (corsWhitelist.indexOf(req.headers.origin) !== -1) {
+    res.setHeader('Access-Control-Allow-Origin', req.headers.origin);
+    res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  }
+
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
+  res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type,Accept');
+  res.setHeader('Access-Control-Allow-Credentials', true);
   next();
 });
-
-app.use(
-  cors({
-    origin: [
-      "http://localhost",
-      "http://raspberrypi.local"
-    ],
-    methods: ["POST", "PUT", "GET", "OPTIONS", "HEAD"],
-    credentials: true,
-  })
-);
 
 // Create a MySQL connection pool
 const pool = mysql.createPool(databaseConfig);
