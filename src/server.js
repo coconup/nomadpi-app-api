@@ -90,9 +90,13 @@ knexInstance.migrate.latest().then(() => {
 
     // Find the user by username in the database
     pool
-      .query('SELECT * FROM users WHERE username = ?', [username])
-      .then((rows) => {
-        const user = rows[0];
+      .query('SELECT * FROM users WHERE username = ?', [username], (err, results) => {
+        if(err) {
+          console.error(err);
+          res.status(500).json({ error: 'Internal Server Error' });
+        }
+
+        const user = results[0];
 
         // Check if the user exists and verify the password
         if (user && bcrypt.compareSync(password, user.password)) {
@@ -101,10 +105,6 @@ knexInstance.migrate.latest().then(() => {
         } else {
           res.status(401).json({ error: 'Unauthorized' });
         }
-      })
-      .catch((err) => {
-        console.error(err);
-        res.status(500).json({ error: 'Internal Server Error' });
       });
   };
 
