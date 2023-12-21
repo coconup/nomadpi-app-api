@@ -1,5 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const session = require('express-session');
+const bcrypt = require('bcrypt');
 const mysql = require('mysql2');
 const knex = require('knex');
 
@@ -8,10 +10,14 @@ const port = 3000;
 
 // Fetch database credentials from environment variables
 const databaseConfig = {
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || 'password',
-  database: process.env.DB_NAME || 'your_database_name',
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+};
+
+if(Object.values(databaseConfig).find(v => !v)) {
+  throw `One or more of the database variables are not set: ${Object.keys(databaseConfig).map(k => `\`$${k}\``).join(', ')}`;
 };
 
 // Add headers before the routes are defined
@@ -35,10 +41,22 @@ knexInstance.migrate.latest().then(() => {
   console.log('Migrations ran successfully.');
 
   // Encryption key from environment variable
-  const encryptionKey = process.env.ENCRYPTION_KEY || 'defaultEncryptionKey';
+  const encryptionKey = process.env.ENCRYPTION_KEY;
+
+  if(!encryptionKey) throw `\`$ENCRYPTION_KEY\` is not defined`;
 
   // Middleware to parse JSON requests
   app.use(bodyParser.json());
+
+  // Use express-session middleware
+  app.use(
+    session({
+      secret: encryptionKey,
+      resave: false,
+      saveUninitialized: true,
+      cookie: { secure: true }
+    })
+  );
 
   // Function to encrypt data
   function encryptData(data) {
@@ -66,10 +84,39 @@ knexInstance.migrate.latest().then(() => {
     return res.status(400).json({message: error.sqlMessage});
   }
 
+  // Authentication middleware
+  const authenticateUser = (req, res, next) => {
+    const { username, password } = req.body;
+
+    // Find the user by username in the database
+    pool
+      .query('SELECT * FROM users WHERE username = ?', [username])
+      .then((rows) => {
+        const user = rows[0];
+
+        // Check if the user exists and verify the password
+        if (user && bcrypt.compareSync(password, user.password)) {
+          req.session.user = user; // Save user data in the session
+          next();
+        } else {
+          res.status(401).json({ error: 'Unauthorized' });
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+        res.status(500).json({ error: 'Internal Server Error' });
+      });
+  };
+
+  // Auth status route
+  app.get('/auth_status', authenticateUser, (req, res) => {
+    res.json({ message: 'ok', user: req.session.user });
+  });
+
   // Generic CRUD function with encryption/decryption option
   function createCrudEndpoints(resourceName, tableName, encryptedAttributes = []) {
     // Get all resources
-    app.get(`/${resourceName}`, (req, res) => {
+    app.get(`/${resourceName}`, authenticateUser, (req, res) => {
       pool.query(`SELECT * FROM ${tableName}`, (err, results) => {
         if (err) return handleError(err, res);
 
@@ -87,7 +134,7 @@ knexInstance.migrate.latest().then(() => {
     });
 
     // Get a specific resource by ID
-    app.get(`/${resourceName}/:id`, (req, res) => {
+    app.get(`/${resourceName}/:id`, authenticateUser, (req, res) => {
       const resourceId = parseInt(req.params.id);
 
       pool.query(`SELECT * FROM ${tableName} WHERE id = ?`, [resourceId], (err, results) => {
@@ -110,7 +157,7 @@ knexInstance.migrate.latest().then(() => {
     });
 
     // Create a new resource
-    app.post(`/${resourceName}`, (req, res) => {
+    app.post(`/${resourceName}`, authenticateUser, (req, res) => {
       const newResource = req.body;
 
       // Encrypt specified attributes
@@ -138,7 +185,7 @@ knexInstance.migrate.latest().then(() => {
     });
 
     // Update a resource by ID
-    app.put(`/${resourceName}/:id`, (req, res) => {
+    app.put(`/${resourceName}/:id`, authenticateUser, (req, res) => {
       const resourceId = parseInt(req.params.id);
       const updatedResource = req.body;
 
@@ -150,7 +197,7 @@ knexInstance.migrate.latest().then(() => {
     });
 
     // Delete a resource by ID
-    app.delete(`/${resourceName}/:id`, (req, res) => {
+    app.delete(`/${resourceName}/:id`, authenticateUser, (req, res) => {
       const resourceId = parseInt(req.params.id);
 
       pool.query(`DELETE FROM ${tableName} WHERE id = ?`, resourceId, (err) => {
