@@ -54,7 +54,9 @@ knexInstance.migrate.latest().then(() => {
       secret: encryptionKey,
       resave: false,
       saveUninitialized: true,
-      cookie: { secure: true }
+      cookie: { 
+        // secure: true 
+      }
     })
   );
 
@@ -110,11 +112,11 @@ knexInstance.migrate.latest().then(() => {
 
   // Auth routes
   app.get('/auth/status', authenticateUser, (req, res) => {
-    res.json({ message: 'ok', user: req.session.user });
+    res.json({ message: 'ok' });
   });
 
   app.post('/auth/login', authenticateUser, (req, res) => {
-    res.json({ message: 'ok', user: req.session.user });
+    res.json({ message: 'ok' });
   });
 
   // Generic CRUD function with encryption/decryption option
