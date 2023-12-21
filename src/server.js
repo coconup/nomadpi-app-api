@@ -21,13 +21,14 @@ if(Object.values(databaseConfig).find(v => !v)) {
   throw `One or more of the database variables are not set: ${Object.keys(databaseConfig).map(k => `\`$${k}\``).join(', ')}`;
 };
 
+const corsWhitelist = (process.env.ALLOWED_DOMAINS || '').split(',').filter(s => !!s).map(s => s.trim());
+
+if(corsWhitelist.length === 0) {
+  throw `\`$ALLOWED_DOMAINS\` is not set`;
+};
+
 // Add headers before the routes are defined
 app.use(function (req, res, next) {
-  const corsWhitelist = [
-    "http://localhost",
-    "http://raspberrypi.local:3000"
-  ];
-
   if (corsWhitelist.includes(req.headers.origin)) {
     res.setHeader('Access-Control-Allow-Origin', req.headers.origin);
     res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
@@ -53,7 +54,7 @@ knexInstance.migrate.latest().then(() => {
   // Encryption key from environment variable
   const encryptionKey = process.env.ENCRYPTION_KEY;
 
-  if(!encryptionKey) throw `\`$ENCRYPTION_KEY\` is not defined`;
+  if(!encryptionKey) throw `\`$ENCRYPTION_KEY\` is not set`;
 
   // Middleware to parse JSON requests
   app.use(bodyParser.json());
