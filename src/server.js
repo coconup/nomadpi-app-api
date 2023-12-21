@@ -108,8 +108,12 @@ knexInstance.migrate.latest().then(() => {
       });
   };
 
-  // Auth status route
-  app.get('/auth_status', authenticateUser, (req, res) => {
+  // Auth routes
+  app.get('/auth/status', authenticateUser, (req, res) => {
+    res.json({ message: 'ok', user: req.session.user });
+  });
+
+  app.post('/auth/login', authenticateUser, (req, res) => {
     res.json({ message: 'ok', user: req.session.user });
   });
 
