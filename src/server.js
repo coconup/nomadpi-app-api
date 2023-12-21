@@ -115,7 +115,6 @@ knexInstance.migrate.latest().then(() => {
         // Check if the user exists and verify the password
         if (user && bcrypt.compareSync(password, user.password)) {
           req.session.user = user; // Save user data in the session
-          res.send(request.session.sessionID);
           next();
         } else {
           res.status(401).json({ error: 'Unauthorized' });
