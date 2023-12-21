@@ -28,9 +28,11 @@ app.use(function (req, res, next) {
     "http://raspberrypi.local"
   ];
 
-  if (corsWhitelist.indexOf(req.headers.origin) !== -1) {
+  if (corsWhitelist.includes(req.headers.origin)) {
     res.setHeader('Access-Control-Allow-Origin', req.headers.origin);
     res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  } else {
+    console.log(req.headers.origin)
   }
 
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
