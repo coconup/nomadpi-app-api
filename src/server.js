@@ -100,6 +100,8 @@ knexInstance.migrate.latest().then(() => {
 
   // Authentication middleware
   const authenticateUser = (req, res, next) => {
+    console.log('debug', req.session)
+
     if (req.session.user) next();
 
     const { username, password } = req.body;
