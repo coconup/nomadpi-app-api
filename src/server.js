@@ -9,9 +9,9 @@ const knex = require('knex');
 const app = express();
 const port = 3000;
 
-if(process.env.VANPI_APP_API_ENABLE_AUTHENTICATION === undefined) throw `\`VANPI_APP_API_ENABLE_AUTHENTICATION\` is not set`;
+if(process.env.VANPI_APP_API_ENABLE_AUTHENTICATION === undefined) throw `\`$VANPI_APP_API_ENABLE_AUTHENTICATION\` is not set`;
 if(!process.env.ENCRYPTION_KEY) throw `\`$ENCRYPTION_KEY\` is not set`;
-if(!process.env.VANPI_APP_API_ALLOWED_DOMAINS) throw `\`VANPI_APP_API_ALLOWED_DOMAINS\` is not set`;
+if(!process.env.VANPI_APP_API_ALLOWED_DOMAINS) throw `\`$VANPI_APP_API_ALLOWED_DOMAINS\` is not set`;
 
 // Set constants
 

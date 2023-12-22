@@ -1,7 +1,7 @@
 const bcrypt = require('bcrypt');
 
 // Retrieve username and password from environment variables
-const enableAuthentication = (/true/).test(process.env.ENABLE_AUTHENTICATION);
+const enableAuthentication = (/true/).test(process.env.VANPI_APP_API_ENABLE_AUTHENTICATION);
 const username = process.env.VANPI_APP_API_USERNAME;
 const password = process.env.VANPI_APP_API_PASSWORD;
 
