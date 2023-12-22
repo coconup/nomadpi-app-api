@@ -9,6 +9,22 @@ const knex = require('knex');
 const app = express();
 const port = 3000;
 
+if(!process.env.ENABLE_AUTHENTICATION) throw `\`$ENABLE_AUTHENTICATION\` is not set`;
+if(!process.env.ENCRYPTION_KEY) throw `\`$ENCRYPTION_KEY\` is not set`;
+if(!process.env.VANPI_APP_API_ALLOWED_DOMAINS) throw `\`VANPI_APP_API_ALLOWED_DOMAINS\` is not set`;
+
+// Set constants
+
+const [
+  encryptionKey,
+  corsWhitelist
+] = [
+  process.env.ENCRYPTION_KEY,
+  process.env.VANPI_APP_API_ALLOWED_DOMAINS
+];
+
+const enableAuthentication = (/true/).test(process.env.ENABLE_AUTHENTICATION);
+
 // Fetch database credentials from environment variables
 const databaseConfig = {
   host: process.env.DB_HOST,
@@ -21,22 +37,18 @@ if(Object.values(databaseConfig).find(v => !v)) {
   throw `One or more of the database variables are not set: ${Object.keys(databaseConfig).map(k => `\`$${k}\``).join(', ')}`;
 };
 
-const corsWhitelist = (process.env.VANPI_APP_API_ALLOWED_DOMAINS || '').split(',').filter(s => !!s).map(s => s.trim());
-
-if(corsWhitelist.length === 0) {
-  throw `\`$VANPI_APP_API_ALLOWED_DOMAINS\` is not set`;
-};
-
 // Add headers before the routes are defined
 app.use(function (req, res, next) {
-  if (corsWhitelist.includes(req.headers.origin)) {
+  const parsedCorsWhitelist = (corsWhitelist || '').split(',').filter(s => !!s).map(s => s.trim());
+
+  if (parsedCorsWhitelist.includes(req.headers.origin)) {
     res.setHeader('Access-Control-Allow-Origin', req.headers.origin);
     res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
   }
 
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
   res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type,Accept');
-  res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader('Access-Control-Allow-Credentials', enableAuthentication);
   next();
 });
 
@@ -50,11 +62,6 @@ const knexInstance = knex(knexConfig.development);
 // Run migrations
 knexInstance.migrate.latest().then(() => {
   console.log('Migrations ran successfully.');
-
-  // Encryption key from environment variable
-  const encryptionKey = process.env.ENCRYPTION_KEY;
-
-  if(!encryptionKey) throw `\`$ENCRYPTION_KEY\` is not set`;
 
   // Middleware to parse JSON requests
   app.use(bodyParser.json());
@@ -75,7 +82,7 @@ knexInstance.migrate.latest().then(() => {
 
   // Function to encrypt data
   function encryptData(data) {
-    const key = crypto.scryptSync(process.env.ENCRYPTION_KEY, 'salt', 32);
+    const key = crypto.scryptSync(encryptionKey, 'salt', 32);
     const iv = crypto.randomBytes(16);
     const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
     let encrypted = cipher.update(JSON.stringify(data), 'utf-8', 'hex');
@@ -85,7 +92,7 @@ knexInstance.migrate.latest().then(() => {
 
   // Function to decrypt data
   function decryptData(encryptedData) {
-    const key = crypto.scryptSync(process.env.ENCRYPTION_KEY, 'salt', 32);
+    const key = crypto.scryptSync(encryptionKey, 'salt', 32);
     const [ivHex, encryptedText] = encryptedData.split(':');
     const iv = Buffer.from(ivHex, 'hex');
     const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
@@ -101,9 +108,7 @@ knexInstance.migrate.latest().then(() => {
 
   // Authentication middleware
   const authenticateUser = (req, res, next) => {
-    console.log('debug', req.session)
-
-    if (req.session.user) {
+    if (!enableAuthentication || req.session.user) {
       next();
     } else {
       const { username, password } = req.body;
@@ -131,11 +136,19 @@ knexInstance.migrate.latest().then(() => {
 
   // Auth routes
   app.get('/auth/status', authenticateUser, (req, res) => {
-    res.json({ message: 'ok' });
+    if(enableAuthentication) {
+      res.json({ message: 'ok' });  
+    } else {
+      res.status(404).json({ error: 'Not found' });
+    }
   });
 
   app.post('/auth/login', authenticateUser, (req, res) => {
-    res.json({ message: 'ok' });
+    if(enableAuthentication) {
+      res.json({ message: 'ok' });  
+    } else {
+      res.status(404).json({ error: 'Not found' });
+    }
   });
 
   // Generic CRUD function with encryption/decryption option
