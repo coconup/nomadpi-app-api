@@ -44,6 +44,8 @@ app.use(function (req, res, next) {
   if (parsedCorsWhitelist.includes(req.headers.origin)) {
     res.setHeader('Access-Control-Allow-Origin', req.headers.origin);
     res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  } else {
+    console.log(`Rejected request from origin \`${req.headers.origin}\``)
   }
 
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
