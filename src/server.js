@@ -1,4 +1,5 @@
 const express = require('express');
+const axios = require('axios');
 const bodyParser = require('body-parser');
 const session = require('express-session');
 const cors = require('cors');
@@ -150,6 +151,29 @@ knexInstance.migrate.latest().then(() => {
       res.json({ message: 'ok' });  
     } else {
       res.status(404).json({ error: 'Not found' });
+    }
+  });
+
+  app.post('/forward/:target_type/:target_id', async (req, res) => {
+    try {
+      // Extract relevant information from the client request
+      const { method, params, headers, body } = req;
+      const { target_type, target_id } = params;
+      const targetUrl = `http://localhost:1880/api/v1/switches/${target_type}/${target_id}`;
+
+      // Make a request to the target server
+      const response = await axios({
+        method,
+        url: targetUrl,
+        headers,
+        data: body,
+      });
+
+      // Forward the target server's response to the client
+      res.status(response.status).send(response.data);
+    } catch (error) {
+      console.error('Error forwarding request:', error.message);
+      res.status(500).send('Internal Server Error');
     }
   });
 
