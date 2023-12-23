@@ -150,11 +150,12 @@ knexInstance.migrate.latest().then(() => {
       // Make a request to the target server
       const response = await axios({
         method: req.method,
-        url: `http://127.0.0.1:1880/api/v1${targetPath}?t=${new Date().getTime()}`, //TODO make it dynamic, currently returning 304
+        url: `http://127.0.0.1:1880/api/v1${targetPath}?t=${new Date().getTime()}`,
         headers: req.headers,
         data: req.body,
       });
 
+      res.setHeader('Cache-Control': 'no-cache')
       // Forward the target server's response to the client
       res.status(response.status).send(response.data);
     } catch (error) {
