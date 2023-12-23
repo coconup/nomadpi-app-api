@@ -147,6 +147,8 @@ knexInstance.migrate.latest().then(() => {
       let targetPath = path;
       params.forEach(param => targetPath = targetPath.replace(`${param}`, req.params[param.replace(':', '')]));
 
+      console.error(`forwarding to http://${vanPiApiRootUrl}${targetPath}`)
+
       // Make a request to the target server
       const response = await axios({
         method: req.method,
@@ -158,11 +160,11 @@ knexInstance.migrate.latest().then(() => {
       // Forward the target server's response to the client
       res.status(response.status).send(response.data);
     } catch (error) {
-      if(error.response.status === 304) {
+      if(error.response && error.response.status === 304) {
         res.status(304).send(error.response.data)
         return
       }
-      
+
       console.error(`Error forwarding request`, error.message);
       res.status(500).send('Internal Server Error');
     }
