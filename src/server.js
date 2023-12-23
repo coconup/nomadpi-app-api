@@ -44,7 +44,6 @@ app.use(function (req, res, next) {
 
   if (parsedCorsWhitelist.includes(req.headers.origin)) {
     res.setHeader('Access-Control-Allow-Origin', req.headers.origin);
-    res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
   } else {
     console.log(`Rejected request from origin \`${req.headers.origin}\``)
   }
@@ -52,9 +51,6 @@ app.use(function (req, res, next) {
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
   res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type,Accept');
   res.setHeader('Access-Control-Allow-Credentials', true);
-
-  console.log('req', req)
-  console.log('res', res)
 
   next();
 });
@@ -158,7 +154,7 @@ knexInstance.migrate.latest().then(() => {
     }
   });
 
-  app.post('/forward/:target_type/:target_id', async (req, res) => {
+  app.post('/switches/:target_type/:target_id', async (req, res) => {
     try {
       // Extract relevant information from the client request
       const { method, params, headers, body } = req;
