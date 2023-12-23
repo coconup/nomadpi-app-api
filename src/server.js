@@ -147,12 +147,12 @@ knexInstance.migrate.latest().then(() => {
       let targetPath = path;
       params.forEach(param => targetPath = targetPath.replace(`${param}`, req.params[param.replace(':', '')]));
 
-      console.error(`forwarding to http://${rootUrl}${targetPath}`)
+      console.error(`forwarding to ${rootUrl}${targetPath}`)
 
       // Make a request to the target server
       const response = await axios({
         method: req.method,
-        url: `http://127.0.0.1:1880/api/v1${targetPath}`,
+        url: `${rootUrl}${targetPath}`,
         headers: req.headers,
         data: req.body,
       });
