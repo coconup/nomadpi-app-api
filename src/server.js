@@ -13,15 +13,18 @@ const port = 3001;
 if(process.env.VANPI_APP_API_ENABLE_AUTHENTICATION === undefined) throw `\`$VANPI_APP_API_ENABLE_AUTHENTICATION\` is not set`;
 if(!process.env.ENCRYPTION_KEY) throw `\`$ENCRYPTION_KEY\` is not set`;
 if(!process.env.VANPI_APP_API_ALLOWED_DOMAINS) throw `\`$VANPI_APP_API_ALLOWED_DOMAINS\` is not set`;
+if(!process.env.VANPI_API_ROOT_URL) throw `\`$VANPI_API_ROOT_URL\` is not set`;
 
 // Set constants
 
 const [
   encryptionKey,
-  corsWhitelist
+  corsWhitelist,
+  vanPiApiRootUrl
 ] = [
   process.env.ENCRYPTION_KEY,
-  process.env.VANPI_APP_API_ALLOWED_DOMAINS
+  process.env.VANPI_APP_API_ALLOWED_DOMAINS,
+  process.env.VANPI_API_ROOT_URL
 ];
 
 const enableAuthentication = (/true/).test(process.env.VANPI_APP_API_ENABLE_AUTHENTICATION);
@@ -154,27 +157,41 @@ knexInstance.migrate.latest().then(() => {
     }
   });
 
-  app.post('/switches/:target_type/:target_id', async (req, res) => {
-    try {
-      // Extract relevant information from the client request
-      const { method, params, headers, body } = req;
-      const { target_type, target_id } = params;
-      const targetUrl = `http://127.0.0.1:1880/api/v1/switches/${target_type}/${target_id}`;
+  // Forward endpoints to VanPi API
+  [
+    { 
+      path: '/switches/:target_type/:target_id', 
+      method: app.post
+    },
+    { 
+      path: '/switches/state', 
+      method: app.get 
+    },
+  ].forEach(({path, method}) => {
+    method_function(path, authenticateUser, async (req, res) => {
+      try {
+        const params = path.match(/:\w+/g) || [];
 
-      // Make a request to the target server
-      const response = await axios({
-        method,
-        url: targetUrl,
-        headers,
-        data: body,
-      });
+        let targetPath = path;
+        params.forEach(param => targetPath = targetPath.replace(`${param}`, req.params[param.replace(':', '')]));
 
-      // Forward the target server's response to the client
-      res.status(response.status).send(response.data);
-    } catch (error) {
-      console.error('Error forwarding request:', error.message);
-      res.status(500).send('Internal Server Error');
-    }
+        const url = [vanPiApiRootUrl, targetPath].join('/').replace('//', '/');
+
+        // Make a request to the target server
+        const response = await axios({
+          req.method,
+          url,
+          headers: req.headers,
+          data: req.body,
+        });
+
+        // Forward the target server's response to the client
+        res.status(response.status).send(response.data);
+      } catch (error) {
+        console.error('Error forwarding request:', error.message);
+        res.status(500).send('Internal Server Error');
+      }
+    })
   });
 
   // Generic CRUD function with encryption/decryption option
