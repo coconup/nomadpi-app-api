@@ -140,6 +140,31 @@ knexInstance.migrate.latest().then(() => {
     }
   };
 
+  const forwardRequest = (req, res, rootUrl, path) => {
+    try {
+      const params = path.match(/:\w+/g) || [];
+
+      let targetPath = path;
+      params.forEach(param => targetPath = targetPath.replace(`${param}`, req.params[param.replace(':', '')]));
+
+      const url = [rootUrl, targetPath].join('/').replace('//', '/');
+
+      // Make a request to the target server
+      const response = await axios({
+        method: req.method,
+        url,
+        headers: req.headers,
+        data: req.body,
+      });
+
+      // Forward the target server's response to the client
+      res.status(response.status).send(response.data);
+    } catch (error) {
+      console.error('Error forwarding request:', error.message);
+      res.status(500).send('Internal Server Error');
+    }
+  }
+
   // Auth routes
   app.get('/auth/status', authenticateUser, (req, res) => {
     if(enableAuthentication) {
@@ -158,40 +183,12 @@ knexInstance.migrate.latest().then(() => {
   });
 
   // Forward endpoints to VanPi API
-  [
-    { 
-      path: '/switches/:target_type/:target_id', 
-      appMethod: app.post
-    },
-    { 
-      path: '/switches/state', 
-      appMethod: app.get 
-    },
-  ].forEach(({path, appMethod}) => {
-    appMethod(path, authenticateUser, async (req, res) => {
-      try {
-        const params = path.match(/:\w+/g) || [];
+  app.post('/switches/:target_type/:target_id', authenticateUser, (req, res) => {
+    forwardRequest(req, res, vanPiApiRootUrl, '/switches/:target_type/:target_id')
+  });
 
-        let targetPath = path;
-        params.forEach(param => targetPath = targetPath.replace(`${param}`, req.params[param.replace(':', '')]));
-
-        const url = [vanPiApiRootUrl, targetPath].join('/').replace('//', '/');
-
-        // Make a request to the target server
-        const response = await axios({
-          method: req.method,
-          url,
-          headers: req.headers,
-          data: req.body,
-        });
-
-        // Forward the target server's response to the client
-        res.status(response.status).send(response.data);
-      } catch (error) {
-        console.error('Error forwarding request:', error.message);
-        res.status(500).send('Internal Server Error');
-      }
-    })
+  app.get('/switches/state', authenticateUser, (req, res) => {
+    forwardRequest(req, res, vanPiApiRootUrl, '/switches/state')
   });
 
   // Generic CRUD function with encryption/decryption option
