@@ -147,12 +147,12 @@ knexInstance.migrate.latest().then(() => {
       let targetPath = path;
       params.forEach(param => targetPath = targetPath.replace(`${param}`, req.params[param.replace(':', '')]));
 
-      console.error(`forwarding to http://${vanPiApiRootUrl}${targetPath}`)
+      console.error(`forwarding to ${vanPiApiRootUrl}${targetPath}`)
 
       // Make a request to the target server
       const response = await axios({
         method: req.method,
-        url: `http://${vanPiApiRootUrl}${targetPath}`,
+        url: `${vanPiApiRootUrl}${targetPath}`,
         headers: req.headers,
         data: req.body,
       });
