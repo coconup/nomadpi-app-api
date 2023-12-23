@@ -159,7 +159,7 @@ knexInstance.migrate.latest().then(() => {
       // Extract relevant information from the client request
       const { method, params, headers, body } = req;
       const { target_type, target_id } = params;
-      const targetUrl = `http://nodered:1880/api/v1/switches/${target_type}/${target_id}`;
+      const targetUrl = `http://127.0.0.1:1880/api/v1/switches/${target_type}/${target_id}`;
 
       // Make a request to the target server
       const response = await axios({
