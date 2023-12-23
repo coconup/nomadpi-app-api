@@ -161,14 +161,14 @@ knexInstance.migrate.latest().then(() => {
   [
     { 
       path: '/switches/:target_type/:target_id', 
-      method: app.post
+      appMethod: app.post
     },
     { 
       path: '/switches/state', 
-      method: app.get 
+      appMethod: app.get 
     },
   ].forEach(({path, method}) => {
-    method_function(path, authenticateUser, async (req, res) => {
+    appMethod(path, authenticateUser, async (req, res) => {
       try {
         const params = path.match(/:\w+/g) || [];
 
