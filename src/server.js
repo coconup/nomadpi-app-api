@@ -158,9 +158,8 @@ knexInstance.migrate.latest().then(() => {
       // Forward the target server's response to the client
       res.status(response.status).send(response.data);
     } catch (error) {
-      console.error(error)
-      if(error.message === 'Request failed with status code 304') {
-        res.status(304).send()
+      if(error.response.status === 304) {
+        res.status(304).send(error.response.data)
         return
       }
       
