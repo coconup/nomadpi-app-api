@@ -140,7 +140,7 @@ knexInstance.migrate.latest().then(() => {
     }
   };
 
-  const forwardRequest = (req, res, rootUrl, path) => {
+  const forwardRequest = async (req, res, rootUrl, path) => {
     try {
       const params = path.match(/:\w+/g) || [];
 
@@ -183,11 +183,11 @@ knexInstance.migrate.latest().then(() => {
   });
 
   // Forward endpoints to VanPi API
-  app.post('/switches/:target_type/:target_id', authenticateUser, (req, res) => {
+  app.post('/switches/:target_type/:target_id', authenticateUser, async (req, res) => {
     forwardRequest(req, res, vanPiApiRootUrl, '/switches/:target_type/:target_id')
   });
 
-  app.get('/switches/state', authenticateUser, (req, res) => {
+  app.get('/switches/state', authenticateUser, async (req, res) => {
     forwardRequest(req, res, vanPiApiRootUrl, '/switches/state')
   });
 
