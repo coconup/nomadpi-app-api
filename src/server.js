@@ -54,6 +54,7 @@ app.use(function (req, res, next) {
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
   res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type,Accept');
   res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader('Cache-Control', 'no-cache')
 
   next();
 });
@@ -155,7 +156,6 @@ knexInstance.migrate.latest().then(() => {
         data: req.body,
       });
 
-      res.setHeader('Cache-Control', 'no-cache')
       // Forward the target server's response to the client
       res.status(response.status).send(response.data);
     } catch (error) {
