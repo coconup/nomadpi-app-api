@@ -54,7 +54,6 @@ app.use(function (req, res, next) {
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
   res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type,Accept');
   res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Cache-Control', 'no-cache')
 
   next();
 });
@@ -159,8 +158,14 @@ knexInstance.migrate.latest().then(() => {
       // Forward the target server's response to the client
       res.status(response.status).send(response.data);
     } catch (error) {
-      console.error(error)
-      console.error('Error forwarding request:', error.message);
+      if(response) {
+        console.error(`Error forwarding request (${response.status})`, error.message);
+        if(response.status === 304) {
+          res.status(304).send(response.data)
+          return
+        }
+      }
+      
       res.status(500).send('Internal Server Error');
     }
   };
