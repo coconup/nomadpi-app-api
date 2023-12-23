@@ -53,11 +53,7 @@ app.use(function (req, res, next) {
   res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type,Accept');
   res.setHeader('Access-Control-Allow-Credentials', true);
 
-  if (req.method === 'OPTIONS') {
-    res.send(200);
-  } else {
-    next();
-  }
+  next();
 });
 
 // Create a MySQL connection pool
