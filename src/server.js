@@ -141,7 +141,7 @@ knexInstance.migrate.latest().then(() => {
   };
 
   const forwardRequest = async (req, res, rootUrl, path) => {
-    try {
+    // try {
       const params = path.match(/:\w+/g) || [];
 
       let targetPath = path;
@@ -159,11 +159,21 @@ knexInstance.migrate.latest().then(() => {
 
       // Forward the target server's response to the client
       res.status(response.status).send(response.data);
-    } catch (error) {
-      console.error('Error forwarding request:', error.message);
-      res.status(500).send('Internal Server Error');
-    }
-  }
+    // } catch (error) {
+    //   console.error(error)
+    //   console.error('Error forwarding request:', error.message);
+    //   res.status(500).send('Internal Server Error');
+    // }
+  };
+
+  // Forward endpoints to VanPi API
+  app.post('/switches/:target_type/:target_id', authenticateUser, async (req, res) => {
+    forwardRequest(req, res, vanPiApiRootUrl, '/switches/:target_type/:target_id')
+  });
+
+  app.get('/switches/state', authenticateUser, async (req, res) => {
+    forwardRequest(req, res, vanPiApiRootUrl, '/switches/state')
+  });
 
   // Auth routes
   app.get('/auth/status', authenticateUser, (req, res) => {
@@ -180,15 +190,6 @@ knexInstance.migrate.latest().then(() => {
     } else {
       res.status(404).json({ error: 'Not found' });
     }
-  });
-
-  // Forward endpoints to VanPi API
-  app.post('/switches/:target_type/:target_id', authenticateUser, async (req, res) => {
-    forwardRequest(req, res, vanPiApiRootUrl, '/switches/:target_type/:target_id')
-  });
-
-  app.get('/switches/state', authenticateUser, async (req, res) => {
-    forwardRequest(req, res, vanPiApiRootUrl, '/switches/state')
   });
 
   // Generic CRUD function with encryption/decryption option
