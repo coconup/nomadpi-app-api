@@ -150,7 +150,7 @@ knexInstance.migrate.latest().then(() => {
       // Make a request to the target server
       const response = await axios({
         method: req.method,
-        url: `${rootUrl}${targetPath}`,
+        url: `http://${rootUrl}${targetPath}`,
         headers: req.headers,
         data: req.body,
       });
