@@ -53,6 +53,9 @@ app.use(function (req, res, next) {
   res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type,Accept');
   res.setHeader('Access-Control-Allow-Credentials', true);
 
+  console.log('req', req)
+  console.log('res', res)
+
   next();
 });
 
