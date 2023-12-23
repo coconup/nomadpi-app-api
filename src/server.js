@@ -158,14 +158,13 @@ knexInstance.migrate.latest().then(() => {
       // Forward the target server's response to the client
       res.status(response.status).send(response.data);
     } catch (error) {
-      if(response) {
-        console.error(`Error forwarding request (${response.status})`, error.message);
-        if(response.status === 304) {
-          res.status(304).send(response.data)
-          return
-        }
+      console.error(error)
+      if(error.message === 'Request failed with status code 304') {
+        res.status(304).send(response.data)
+        return
       }
       
+      console.error(`Error forwarding request`, error.message);
       res.status(500).send('Internal Server Error');
     }
   };
