@@ -160,7 +160,7 @@ knexInstance.migrate.latest().then(() => {
     } catch (error) {
       console.error(error)
       if(error.message === 'Request failed with status code 304') {
-        res.status(304).send(response.data)
+        res.status(304).send()
         return
       }
       
