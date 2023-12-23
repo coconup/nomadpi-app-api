@@ -155,7 +155,7 @@ knexInstance.migrate.latest().then(() => {
         data: req.body,
       });
 
-      res.setHeader('Cache-Control': 'no-cache')
+      res.setHeader('Cache-Control', 'no-cache')
       // Forward the target server's response to the client
       res.status(response.status).send(response.data);
     } catch (error) {
