@@ -147,9 +147,10 @@ knexInstance.migrate.latest().then(() => {
       let targetPath = path;
       params.forEach(param => targetPath = targetPath.replace(`${param}`, req.params[param.replace(':', '')]));
 
-      const url = [rootUrl, targetPath].join('/').replace('//', '/')
-
-      console.error(`forwarding to ${url}`)
+      const url = [
+        rootUrl.replace(/\/+$/, ''), 
+        targetPath.replace(/^\/+/, '')
+      ].join('/');
 
       // Make a request to the target server
       const response = await axios({
