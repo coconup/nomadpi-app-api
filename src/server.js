@@ -179,7 +179,7 @@ knexInstance.migrate.latest().then(() => {
 
         // Make a request to the target server
         const response = await axios({
-          req.method,
+          method: req.method,
           url,
           headers: req.headers,
           data: req.body,
