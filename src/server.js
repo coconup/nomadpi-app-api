@@ -14,17 +14,20 @@ if(process.env.VANPI_APP_API_ENABLE_AUTHENTICATION === undefined) throw `\`$VANP
 if(!process.env.ENCRYPTION_KEY) throw `\`$ENCRYPTION_KEY\` is not set`;
 if(!process.env.VANPI_APP_API_ALLOWED_DOMAINS) throw `\`$VANPI_APP_API_ALLOWED_DOMAINS\` is not set`;
 if(!process.env.VANPI_API_ROOT_URL) throw `\`$VANPI_API_ROOT_URL\` is not set`;
+if(!process.env.AUTOMATION_API_ROOT_URL) throw `\`$AUTOMATION_API_ROOT_URL\` is not set`;
 
 // Set constants
 
 const [
   encryptionKey,
   corsWhitelist,
-  vanPiApiRootUrl
+  vanPiApiRootUrl,
+  automationApiRootUrl
 ] = [
   process.env.ENCRYPTION_KEY,
   process.env.VANPI_APP_API_ALLOWED_DOMAINS,
-  process.env.VANPI_API_ROOT_URL
+  process.env.VANPI_API_ROOT_URL,
+  process.env.AUTOMATION_API_ROOT_URL
 ];
 
 const enableAuthentication = (/true/).test(process.env.VANPI_APP_API_ENABLE_AUTHENTICATION);
@@ -180,6 +183,15 @@ knexInstance.migrate.latest().then(() => {
 
   app.get('/relays/state', authenticateUser, async (req, res) => {
     forwardRequest(req, res, vanPiApiRootUrl, '/relays/state')
+  });
+
+  // Forward endpoints to Automation API
+  app.post('/modes/:mode_key', authenticateUser, async (req, res) => {
+    forwardRequest(req, res, automationApiRootUrl, '/modes/:mode_key')
+  });
+
+  app.get('/modes/state', authenticateUser, async (req, res) => {
+    forwardRequest(req, res, automationApiRootUrl, '/modes/state')
   });
 
   // Auth routes
