@@ -5,8 +5,8 @@
 exports.up = function(knex) {
   return knex.schema.createTable('relays', function (table) {
     table.increments('id').primary();
-    table.string('name').notNullable();
-    table.string('relay_position').notNullable();
+    table.string('name').unique().notNullable();
+    table.string('relay_position').unique().notNullable();
     table.string('icon');
   });
 };
