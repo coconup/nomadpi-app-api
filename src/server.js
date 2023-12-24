@@ -298,7 +298,7 @@ knexInstance.migrate.latest().then(() => {
   createCrudEndpoints('credentials', 'credentials', ['payload']);
 
   // Create CRUD endpoints
-  createCrudEndpoints('relay_switches', 'relay_switches', []);
+  createCrudEndpoints('relays', 'relays', []);
   createCrudEndpoints('action_switches', 'action_switches', []);
   createCrudEndpoints('switch_groups', 'switch_groups', []);
 
