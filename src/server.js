@@ -174,12 +174,12 @@ knexInstance.migrate.latest().then(() => {
   };
 
   // Forward endpoints to VanPi API
-  app.post('/switches/:target_type/:target_id', authenticateUser, async (req, res) => {
-    forwardRequest(req, res, vanPiApiRootUrl, '/switches/:target_type/:target_id')
+  app.post('/relays/:relay_position', authenticateUser, async (req, res) => {
+    forwardRequest(req, res, vanPiApiRootUrl, '/relays/:relay_position')
   });
 
-  app.get('/switches/state', authenticateUser, async (req, res) => {
-    forwardRequest(req, res, vanPiApiRootUrl, '/switches/state')
+  app.get('/relays/state', authenticateUser, async (req, res) => {
+    forwardRequest(req, res, vanPiApiRootUrl, '/relays/state')
   });
 
   // Auth routes
