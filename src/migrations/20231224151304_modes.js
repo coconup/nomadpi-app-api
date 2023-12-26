@@ -6,7 +6,7 @@ exports.up = function(knex) {
   return knex.schema.createTable('modes', function (table) {
     table.increments('id').primary();
     table.string('name').unique().notNullable();
-    table.string('key').unique().notNullable();
+    table.string('mode_key').unique().notNullable();
     table.string('icon');
   });
 };
