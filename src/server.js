@@ -172,6 +172,7 @@ knexInstance.migrate.latest().then(() => {
       }
 
       console.error(`Error forwarding request`, error.message);
+      console.error(`Status`, error.response.status);
       if(error.response.data) console.error(error.response.data);
       res.status(500).send('Internal Server Error');
     }
