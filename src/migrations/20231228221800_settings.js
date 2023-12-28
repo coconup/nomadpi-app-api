@@ -4,7 +4,7 @@
  */
 exports.up = function(knex) {
   return knex.schema.createTable('settings', function (table) {
-    table.string('setting_key').primary().notNullable();
+    table.string('setting_key').unique().notNullable();
     table.string('label').notNullable();
     table.string('value');
   })
