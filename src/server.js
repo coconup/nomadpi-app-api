@@ -187,6 +187,10 @@ knexInstance.migrate.latest().then(() => {
     forwardRequest(req, res, vanPiApiRootUrl, '/relays/state')
   });
 
+  app.get('/usb_devices', authenticateUser, async (req, res) => {
+    forwardRequest(req, res, vanPiApiRootUrl, '/usb_devices')
+  });
+
   // Forward endpoints to Automation API
   app.post('/modes/:mode_key', authenticateUser, async (req, res) => {
     forwardRequest(req, res, automationApiRootUrl, '/modes/:mode_key')
