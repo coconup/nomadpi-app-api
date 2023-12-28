@@ -177,8 +177,8 @@ knexInstance.migrate.latest().then(() => {
   };
 
   // Forward endpoints to VanPi API
-  app.post('/relays/:relay_position', authenticateUser, async (req, res) => {
-    forwardRequest(req, res, vanPiApiRootUrl, '/relays/:relay_position')
+  app.post('/relays/state', authenticateUser, async (req, res) => {
+    forwardRequest(req, res, vanPiApiRootUrl, '/relays/state')
   });
 
   app.get('/relays/state', authenticateUser, async (req, res) => {
@@ -311,6 +311,7 @@ knexInstance.migrate.latest().then(() => {
 
   // Create CRUD endpoints
   createCrudEndpoints('relays', 'relays', []);
+  createCrudEndpoints('wifi_relays', 'wifi_relays', []);
   createCrudEndpoints('modes', 'modes', []);
   createCrudEndpoints('action_switches', 'action_switches', []);
   createCrudEndpoints('switch_groups', 'switch_groups', []);
