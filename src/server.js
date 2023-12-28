@@ -217,7 +217,14 @@ knexInstance.migrate.latest().then(() => {
     }
   });
 
-  // Update settings
+  // Settings endpoints
+  app.get(`/settings`, authenticateUser, (req, res) => {
+    pool.query(`SELECT * FROM settings`, (err, results) => {
+      if (err) return handleError(err, res);
+      res.json(results);
+    });
+  });
+
   app.put(`/settings/:setting_key`, authenticateUser, (req, res) => {
     const updatedResource = req.body;
 
