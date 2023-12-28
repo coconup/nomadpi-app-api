@@ -9,7 +9,7 @@ exports.up = function(knex) {
     table.string('value');
   })
   .then(() => {
-    knex('settings').insert([
+    return knex('settings').insert([
       {
         setting_key: 'gpsd_usb_device',
         label: 'GPS device'
