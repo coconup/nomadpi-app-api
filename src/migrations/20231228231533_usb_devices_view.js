@@ -3,7 +3,7 @@
  * @returns { Promise<void> }
  */
 exports.up = function(knex) {
-  return knex.raw(```
+  return knex.raw(`
     create view usb_devices
 
     as
@@ -21,7 +21,7 @@ exports.up = function(knex) {
       value as device_spec
     from settings
     where setting_key = 'foo'
-  ```)
+  `)
 };
 
 /**
