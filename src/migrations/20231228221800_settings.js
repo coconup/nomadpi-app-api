@@ -6,7 +6,7 @@ exports.up = function(knex) {
   return knex.schema.createTable('settings', function (table) {
     table.string('setting_key').primary().notNullable();
     table.string('label').primary().notNullable();
-    table.string('value').notNullable();
+    table.string('value');
   })
   .then(() => {
     // Insert the initial user with hashed password
