@@ -217,6 +217,17 @@ knexInstance.migrate.latest().then(() => {
     }
   });
 
+  // Update settings
+  app.put(`/settings/:setting_key`, authenticateUser, (req, res) => {
+    const updatedResource = req.body;
+
+    pool.query(`UPDATE settings SET ? WHERE setting_key = ?`, [updatedResource, req.params.setting_key], (err) => {
+      if (err) return handleError(err, res);
+
+      res.json(updatedResource);
+    });
+  });
+
   // Generic CRUD function with encryption/decryption option
   function createCrudEndpoints(resourceName, tableName, encryptedAttributes = []) {
     // Get all resources
