@@ -14,6 +14,10 @@ exports.up = function(knex) {
         setting_key: 'gpsd_usb_device',
         label: 'GPS device'
       },
+      {
+        setting_key: 'zigbee_usb_device',
+        label: 'Zigbee device'
+      }
     ]);
   });;
 };
