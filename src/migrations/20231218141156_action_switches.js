@@ -7,7 +7,7 @@ exports.up = function(knex) {
     table.increments('id').primary();
     table.string('name').notNullable();
     table.string('icon');
-    table.json('relay_switches').notNullable();
+    table.json('switches').notNullable();
   });
 };
 
