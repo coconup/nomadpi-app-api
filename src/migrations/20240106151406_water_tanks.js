@@ -8,6 +8,7 @@ exports.up = function(knex) {
     table.string('name').unique().notNullable();
     table.string('connection_type').notNullable();
     table.json('connection_params').notNullable();
+    table.string('volumetric_type').notNullable();
     table.json('volumetric_params').notNullable();
   });
 };
