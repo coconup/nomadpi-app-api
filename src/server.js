@@ -195,6 +195,10 @@ knexInstance.migrate.latest().then(() => {
     forwardRequest(req, res, vanPiApiRootUrl, '/batteries/:connection_type/:device_type/:device_id/state')
   });
 
+  app.get('/water_tanks/:connection_type/:device_type/:device_id/state', authenticateUser, async (req, res) => {
+    forwardRequest(req, res, vanPiApiRootUrl, '/water_tanks/:connection_type/:device_type/:device_id/state')
+  });
+
   // Forward endpoints to Automation API
   app.post('/modes/:mode_key', authenticateUser, async (req, res) => {
     forwardRequest(req, res, automationApiRootUrl, '/modes/:mode_key')
@@ -344,6 +348,7 @@ knexInstance.migrate.latest().then(() => {
   createCrudEndpoints('action_switches', 'action_switches', []);
   createCrudEndpoints('switch_groups', 'switch_groups', []);
   createCrudEndpoints('batteries', 'batteries', []);
+  createCrudEndpoints('water_tanks', 'water_tanks', []);
 
   // Start the server
   app.listen(port, () => {
