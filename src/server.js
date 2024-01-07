@@ -178,6 +178,15 @@ knexInstance.migrate.latest().then(() => {
     }
   };
 
+  const restartMqttHub = async(res, responseData) => {
+    const response = await axios({
+      method: 'post',
+      url: `${vanPiApiRootUrl}/mqtt_hub/restart`
+    });
+
+    res.status(response.status).send(responseData);;
+  }
+
   // Forward endpoints to VanPi API
   app.put('/settings/:setting_key', authenticateUser, async (req, res) => {
     forwardRequest(req, res, vanPiApiRootUrl, '/settings/:setting_key')
@@ -238,7 +247,7 @@ knexInstance.migrate.latest().then(() => {
   });
 
   // Generic CRUD function with encryption/decryption option
-  function createCrudEndpoints(resourceName, tableName, encryptedAttributes = []) {
+  function createCrudEndpoints(resourceName, tableName, encryptedAttributes = [], callbacks={}) {
     // Get all resources
     app.get(`/${resourceName}`, authenticateUser, (req, res) => {
       pool.query(`SELECT * FROM ${tableName}`, (err, results) => {
@@ -304,7 +313,12 @@ knexInstance.migrate.latest().then(() => {
           });
         }
 
-        res.status(201).json(decryptedResult);
+        const callback = callbacks.create || callbacks.all;
+        if(callback) {
+          callback(res, decryptedResults);
+        } else {
+          res.status(201).json(decryptedResult);
+        }
       });
     });
 
@@ -316,7 +330,20 @@ knexInstance.migrate.latest().then(() => {
       pool.query(`UPDATE ${tableName} SET ? WHERE id = ?`, [updatedResource, resourceId], (err) => {
         if (err) return handleError(err, res);
 
-        res.json(updatedResource);
+        // Return the decrypted result
+        const decryptedResult = { ...updatedResource };
+        if (encryptedAttributes.length > 0) {
+          encryptedAttributes.forEach(attr => {
+            decryptedResult[attr] = decryptData(decryptedResult[attr]);
+          });
+        }
+
+        const callback = callbacks.update || callbacks.all;
+        if(callback) {
+          callback(res, decryptedResult);
+        } else {
+          res.status(201).json(decryptedResult);
+        }
       });
     });
 
@@ -327,7 +354,14 @@ knexInstance.migrate.latest().then(() => {
       pool.query(`DELETE FROM ${tableName} WHERE id = ?`, resourceId, (err) => {
         if (err) return handleError(err, res);
 
-        res.json({ message: `${resourceName} deleted successfully` });
+        const responseData = { message: `${resourceName} deleted successfully` };
+
+        const callback = callbacks.delete || callbacks.all;
+        if(callback) {
+          callback(res, responseData);
+        } else {
+          res.status(201).json(responseData);
+        }
       });
     });
   }
@@ -342,7 +376,7 @@ knexInstance.migrate.latest().then(() => {
   createCrudEndpoints('action_switches', 'action_switches', []);
   createCrudEndpoints('switch_groups', 'switch_groups', []);
   createCrudEndpoints('batteries', 'batteries', []);
-  createCrudEndpoints('water_tanks', 'water_tanks', []);
+  createCrudEndpoints('water_tanks', 'water_tanks', [], {all: restartMqttHub});
 
   // Start the server
   app.listen(port, () => {
