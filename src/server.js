@@ -179,6 +179,10 @@ knexInstance.migrate.latest().then(() => {
   };
 
   // Forward endpoints to VanPi API
+  app.put('/settings/:setting_key', authenticateUser, async (req, res) => {
+    forwardRequest(req, res, vanPiApiRootUrl, '/settings/:setting_key')
+  });
+
   app.post('/relays/state', authenticateUser, async (req, res) => {
     forwardRequest(req, res, vanPiApiRootUrl, '/relays/state')
   });
@@ -230,16 +234,6 @@ knexInstance.migrate.latest().then(() => {
     pool.query(`SELECT * FROM settings`, (err, results) => {
       if (err) return handleError(err, res);
       res.json(results);
-    });
-  });
-
-  app.put(`/settings/:setting_key`, authenticateUser, (req, res) => {
-    const updatedResource = req.body;
-
-    pool.query(`UPDATE settings SET ? WHERE setting_key = ?`, [updatedResource, req.params.setting_key], (err) => {
-      if (err) return handleError(err, res);
-
-      res.json(updatedResource);
     });
   });
 

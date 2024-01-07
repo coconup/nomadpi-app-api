@@ -11,6 +11,10 @@ exports.up = function(knex) {
   .then(() => {
     return knex('settings').insert([
       {
+        setting_key: 'portainer_access_token',
+        label: 'Portainer access token'
+      },
+      {
         setting_key: 'gpsd_usb_device',
         label: 'GPS device'
       },
