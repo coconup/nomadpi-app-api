@@ -315,7 +315,7 @@ knexInstance.migrate.latest().then(() => {
 
         const callback = callbacks.create || callbacks.all;
         if(callback) {
-          callback(res, decryptedResults);
+          callback(res, decryptedResult);
         } else {
           res.status(201).json(decryptedResult);
         }
