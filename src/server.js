@@ -377,6 +377,7 @@ knexInstance.migrate.latest().then(() => {
   createCrudEndpoints('switch_groups', 'switch_groups', []);
   createCrudEndpoints('batteries', 'batteries', []);
   createCrudEndpoints('water_tanks', 'water_tanks', [], {all: restartMqttHub});
+  createCrudEndpoints('cameras', 'cameras', []);
 
   // Start the server
   app.listen(port, () => {
