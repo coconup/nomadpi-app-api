@@ -251,6 +251,8 @@ knexInstance.migrate.latest().then(() => {
 
     const url = `/v4/account/${account_id}/client/${client_id}/pin/verify`;
 
+    console.error(req)
+
     forwardRequest(req, res, blinkApiRootUrl(tier), url, { transformRequest: blinkApiTransformRequest })
   });
 
