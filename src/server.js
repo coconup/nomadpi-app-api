@@ -40,7 +40,9 @@ const databaseConfig = {
   database: process.env.DB_NAME,
 };
 
-const blinkApiRootUrl = 'https://rest-prod.immedia-semi.com/api/';
+const blinkApiRootUrl = (tier='prod') => {
+  eturn `https://rest-${tier}.immedia-semi.com/api/`
+};
 
 if(Object.values(databaseConfig).find(v => !v)) {
   throw `One or more of the database variables are not set: ${Object.keys(databaseConfig).map(k => `\`$${k}\``).join(', ')}`;
@@ -237,7 +239,19 @@ knexInstance.migrate.latest().then(() => {
 
   // Forward endpoints to Blink Cameras API
   app.post('/services/blink_cameras/login', authenticateUser, async (req, res) => {
-    forwardRequest(req, res, blinkApiRootUrl, '/v5/account/login', { transformRequest: blinkApiTransformRequest })
+    forwardRequest(req, res, blinkApiRootUrl(blinkApiRootUrl), '/v5/account/login', { transformRequest: blinkApiTransformRequest })
+  });
+
+  app.post('/services/blink_cameras/tier/:tier/account/:account_id/client/:client_id', authenticateUser, async (req, res) => {
+    const {
+      tier,
+      account_id,
+      client_id
+    } = req.params;
+
+    const url = `/v4/account/${account_id}/client/${client_id}/pin/verify`;
+
+    forwardRequest(req, res, blinkApiRootUrl(tier), url, { transformRequest: blinkApiTransformRequest })
   });
 
   // Auth routes
