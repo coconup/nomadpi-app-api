@@ -172,7 +172,6 @@ knexInstance.migrate.latest().then(() => {
       res.status(response.status).send(response.data);
     } catch (error) {
       if(error.response && [304, 400, 401, 422].includes(error.response.status)) {
-        console.error(error)
         res.status(error.response.status).send(error.response.data)
         return
       }
@@ -197,10 +196,11 @@ knexInstance.migrate.latest().then(() => {
     res.status(response.status).send(responseData);;
   };
 
-  const blinkApiTransformRequest = (data, headers) => {
+  const blinkApiTransformRequest = (data, headers, auth_token) => {
     delete headers.host;
     delete headers.referer;
     delete headers.origin;
+    if(auth_token) headers['TOKEN_AUTH'] = auth_token;
     return JSON.stringify(data);
   };
 
@@ -250,9 +250,16 @@ knexInstance.migrate.latest().then(() => {
       client_id
     } = req.params;
 
+    const {
+      auth_token,
+      ...rest
+    } = req.body;
+
+    req.body = rest;
+
     const url = `/v4/account/${account_id}/client/${client_id}/pin/verify`;
 
-    forwardRequest(req, res, blinkApiRootUrl(tier), url, { transformRequest: blinkApiTransformRequest })
+    forwardRequest(req, res, blinkApiRootUrl(tier), url, { transformRequest: () => blinkApiTransformRequest(auth_token) })
   });
 
   // Auth routes
