@@ -239,7 +239,7 @@ knexInstance.migrate.latest().then(() => {
 
   // Forward endpoints to Blink Cameras API
   app.post('/services/blink_cameras/login', authenticateUser, async (req, res) => {
-    forwardRequest(req, res, blinkApiRootUrl(blinkApiRootUrl), '/v5/account/login', { transformRequest: blinkApiTransformRequest })
+    forwardRequest(req, res, blinkApiRootUrl(), '/v5/account/login', { transformRequest: blinkApiTransformRequest })
   });
 
   app.post('/services/blink_cameras/tier/:tier/account/:account_id/client/:client_id', authenticateUser, async (req, res) => {
