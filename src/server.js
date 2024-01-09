@@ -197,9 +197,8 @@ knexInstance.migrate.latest().then(() => {
   };
 
   const blinkApiTransformRequest = (data, headers, auth_token) => {
-    delete headers.host;
-    delete headers.referer;
-    delete headers.origin;
+    Object.keys(headers).forEach(k => delete headers[k]);
+    headers['Content-Type'] = 'application/json';
     if(auth_token) headers['TOKEN_AUTH'] = auth_token;
     return JSON.stringify(data);
   };
