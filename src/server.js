@@ -172,6 +172,7 @@ knexInstance.migrate.latest().then(() => {
       res.status(response.status).send(response.data);
     } catch (error) {
       if(error.response && [304, 400, 401, 422].includes(error.response.status)) {
+        console.error(error)
         res.status(error.response.status).send(error.response.data)
         return
       }
@@ -250,8 +251,6 @@ knexInstance.migrate.latest().then(() => {
     } = req.params;
 
     const url = `/v4/account/${account_id}/client/${client_id}/pin/verify`;
-
-    console.error(req)
 
     forwardRequest(req, res, blinkApiRootUrl(tier), url, { transformRequest: blinkApiTransformRequest })
   });
