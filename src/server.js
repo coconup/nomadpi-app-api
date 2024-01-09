@@ -237,7 +237,8 @@ knexInstance.migrate.latest().then(() => {
       '/v5/account/login',
       {
         transformRequest: (data, headers) => {
-          delete headers.common['Host'];
+          console.error(headers)
+          // delete headers.common['Host'];
           return data;
         }
       }
