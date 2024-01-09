@@ -3,11 +3,10 @@
  * @returns { Promise<void> }
  */
 exports.up = function(knex) {
-  return knex.schema.createTable('cameras', function (table) {
+  return knex.schema.createTable('sensors', function (table) {
     table.increments('id').primary();
     table.string('name').unique().notNullable();
-    table.string('vendor_id').notNullable();
-    table.string('product_id').notNullable();
+    table.string('sensor_type').notNullable();
     table.string('connection_type').notNullable();
     table.json('connection_params').notNullable();
   });
@@ -18,5 +17,5 @@ exports.up = function(knex) {
  * @returns { Promise<void> }
  */
 exports.down = function(knex) {
-  return knex.schema.dropTable('cameras');
+  return knex.schema.dropTable('sensors');
 };
