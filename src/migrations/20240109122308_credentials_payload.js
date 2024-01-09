@@ -1,6 +1,6 @@
 exports.up = function(knex) {
   return knex.schema.alterTable('credentials', (table) => {
-    table.json('payload').alter();
+    table.text('payload', 'longtext').alter();
   });
 };
 
