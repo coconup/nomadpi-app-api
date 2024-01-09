@@ -145,7 +145,7 @@ knexInstance.migrate.latest().then(() => {
     }
   };
 
-  const forwardRequest = async (req, res, rootUrl, path) => {
+  const forwardRequest = async (req, res, rootUrl, path, options={}) => {
     try {
       const params = path.match(/:\w+/g) || [];
 
@@ -163,6 +163,7 @@ knexInstance.migrate.latest().then(() => {
         url,
         headers: req.headers,
         data: req.body,
+        ...options
       });
 
       // Forward the target server's response to the client
@@ -229,7 +230,18 @@ knexInstance.migrate.latest().then(() => {
 
   // Forward endpoints to Blink Cameras API
   app.post('/services/blink_cameras/login', authenticateUser, async (req, res) => {
-    forwardRequest(req, res, blinkApiRootUrl, '/v5/account/login')
+    forwardRequest(
+      req, 
+      res, 
+      blinkApiRootUrl, 
+      '/v5/account/login',
+      {
+        transformRequest: (data, headers) => {
+          delete headers.common['Host'];
+          return data;
+        }
+      }
+    )
   });
 
   // Auth routes
