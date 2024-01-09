@@ -3,6 +3,7 @@ const axios = require('axios');
 const bodyParser = require('body-parser');
 const session = require('express-session');
 const cors = require('cors');
+const crypto = require('crypto');
 const bcrypt = require('bcrypt');
 const mysql = require('mysql2');
 const knex = require('knex');
