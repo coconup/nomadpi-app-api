@@ -169,7 +169,7 @@ knexInstance.migrate.latest().then(() => {
       // Forward the target server's response to the client
       res.status(response.status).send(response.data);
     } catch (error) {
-      if(error.response && [304, 400, 422].includes(error.response.status)) {
+      if(error.response && [304, 400, 401, 422].includes(error.response.status)) {
         res.status(error.response.status).send(error.response.data)
         return
       }
@@ -192,7 +192,14 @@ knexInstance.migrate.latest().then(() => {
     });
 
     res.status(response.status).send(responseData);;
-  }
+  };
+
+  const blinkApiTransformRequest = (data, headers) => {
+    delete headers.host;
+    delete headers.referer;
+    delete headers.origin;
+    return JSON.stringify(data);
+  };
 
   // Forward endpoints to VanPi API
   app.put('/settings/:setting_key', authenticateUser, async (req, res) => {
@@ -230,20 +237,7 @@ knexInstance.migrate.latest().then(() => {
 
   // Forward endpoints to Blink Cameras API
   app.post('/services/blink_cameras/login', authenticateUser, async (req, res) => {
-    forwardRequest(
-      req, 
-      res, 
-      blinkApiRootUrl, 
-      '/v5/account/login',
-      {
-        transformRequest: (data, headers) => {
-          delete headers.host;
-          delete headers.referer;
-          delete headers.origin;
-          return JSON.stringify(data);
-        }
-      }
-    )
+    forwardRequest(req, res, blinkApiRootUrl, '/v5/account/login', { transformRequest: blinkApiTransformRequest })
   });
 
   // Auth routes
