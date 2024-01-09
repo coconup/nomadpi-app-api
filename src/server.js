@@ -41,7 +41,7 @@ const databaseConfig = {
 };
 
 const blinkApiRootUrl = (tier='prod') => {
-  eturn `https://rest-${tier}.immedia-semi.com/api/`
+  return `https://rest-${tier}.immedia-semi.com/api/`
 };
 
 if(Object.values(databaseConfig).find(v => !v)) {
