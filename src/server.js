@@ -1,3 +1,4 @@
+
 const express = require('express');
 const axios = require('axios');
 const bodyParser = require('body-parser');
@@ -39,10 +40,6 @@ const databaseConfig = {
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-};
-
-const blinkApiRootUrl = (tier='prod') => {
-  return `https://rest-${tier}.immedia-semi.com/api/`
 };
 
 if(Object.values(databaseConfig).find(v => !v)) {
@@ -197,13 +194,6 @@ knexInstance.migrate.latest().then(() => {
     res.status(response.status).send(responseData);;
   };
 
-  const blinkApiTransformRequest = (data, headers, auth_token) => {
-    Object.keys(headers).forEach(k => delete headers[k]);
-    headers['Content-Type'] = 'application/json';
-    if(auth_token) headers['TOKEN_AUTH'] = auth_token;
-    return JSON.stringify(data);
-  };
-
   // Forward endpoints to VanPi API
   app.put('/settings/:setting_key', authenticateUser, async (req, res) => {
     forwardRequest(req, res, vanPiApiRootUrl, '/settings/:setting_key')
@@ -236,30 +226,6 @@ knexInstance.migrate.latest().then(() => {
 
   app.get('/modes/state', authenticateUser, async (req, res) => {
     forwardRequest(req, res, automationApiRootUrl, '/modes/state')
-  });
-
-  // Forward endpoints to Blink Cameras API
-  app.post('/services/blink_cameras/login', authenticateUser, async (req, res) => {
-    forwardRequest(req, res, blinkApiRootUrl(), '/v5/account/login', { transformRequest: blinkApiTransformRequest })
-  });
-
-  app.post('/services/blink_cameras/tier/:tier/account/:account_id/client/:client_id', authenticateUser, async (req, res) => {
-    const {
-      tier,
-      account_id,
-      client_id
-    } = req.params;
-
-    const {
-      auth_token,
-      ...rest
-    } = req.body;
-
-    req.body = rest;
-
-    const url = `/v4/account/${account_id}/client/${client_id}/pin/verify`;
-
-    forwardRequest(req, res, blinkApiRootUrl(tier), url, { transformRequest: (data, headers) => blinkApiTransformRequest(data, headers, auth_token) })
   });
 
   // Auth routes
@@ -406,9 +372,6 @@ knexInstance.migrate.latest().then(() => {
       });
     });
   }
-
-  // Create CRUD endpoints for "credentials" with encryption on the "payload" attribute
-  createCrudEndpoints('credentials', 'credentials', ['payload']);
 
   // Create CRUD endpoints
   createCrudEndpoints('relays', 'relays', []);
