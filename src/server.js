@@ -211,12 +211,24 @@ knexInstance.migrate.latest().then(() => {
     forwardRequest(req, res, vanPiApiRootUrl, '/usb_devices')
   });
 
-  app.get('/batteries/:connection_type/:device_type/:device_id/state', authenticateUser, async (req, res) => {
-    forwardRequest(req, res, vanPiApiRootUrl, '/batteries/:connection_type/:device_type/:device_id/state')
+  app.get('/gps/state', authenticateUser, async (req, res) => {
+    forwardRequest(req, res, vanPiApiRootUrl, '/batteries/state')
   });
 
-  app.get('/water_tanks/:connection_type/:device_type/:device_id/state', authenticateUser, async (req, res) => {
-    forwardRequest(req, res, vanPiApiRootUrl, '/water_tanks/:connection_type/:device_type/:device_id/state')
+  app.get('/batteries/state', authenticateUser, async (req, res) => {
+    forwardRequest(req, res, vanPiApiRootUrl, '/batteries/state')
+  });
+
+  app.get('/water_tanks/state', authenticateUser, async (req, res) => {
+    forwardRequest(req, res, vanPiApiRootUrl, '/water_tanks/state')
+  });
+
+  app.get('/temperature_sensors/state', authenticateUser, async (req, res) => {
+    forwardRequest(req, res, vanPiApiRootUrl, '/temperature_sensors/state')
+  });
+
+  app.get('/solar_charge_controllers/state', authenticateUser, async (req, res) => {
+    forwardRequest(req, res, vanPiApiRootUrl, '/solar_charge_controllers/state')
   });
 
   // Forward endpoints to Automation API
