@@ -212,7 +212,7 @@ knexInstance.migrate.latest().then(() => {
   });
 
   app.get('/gps/state', authenticateUser, async (req, res) => {
-    forwardRequest(req, res, vanPiApiRootUrl, '/batteries/state')
+    forwardRequest(req, res, vanPiApiRootUrl, '/gps/state')
   });
 
   app.get('/batteries/state', authenticateUser, async (req, res) => {
