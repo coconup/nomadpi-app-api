@@ -228,8 +228,7 @@ knexInstance.migrate.latest().then(() => {
       return res.status(400).json({ error: `\`actor\` and \`state\` are required parameters` });
     }
 
-    const switchItem = getSwitchItem(switchType, switchId, res);
-    console.error('switchItem', switchItem)
+    const switchItem = await getSwitchItem(switchType, switchId, res);
     
     if(!switchItem) {
       return res.status(404).json({ error: `${switchType} not found` });
@@ -243,7 +242,7 @@ knexInstance.migrate.latest().then(() => {
       const switches = JSON.parse(switchItem.switches);
       
       payload = switches.map(({switch_type: relayType, switch_id: relayId, on_state}) => {
-        let relayItem = getSwitchItem(relayType, relayId);
+        let relayItem = await getSwitchItem(relayType, relayId);
 
         return {
           ...relayStatePayload(relayType, relayItem, actor, state),
@@ -256,7 +255,7 @@ knexInstance.migrate.latest().then(() => {
     forwardRequest(req, res, vanPiApiRootUrl, '/relays/state');
   };
 
-  const getSwitchItem = (switchType, switchId) => {
+  const getSwitchItem = async (switchType, switchId) => {
     const tableName = {
       relay: 'relays',
       wifi_relay: 'wifi_relays',
@@ -264,9 +263,14 @@ knexInstance.migrate.latest().then(() => {
       mode: 'modes'
     }[switchType];
 
-    return pool.query(`SELECT * FROM ${tableName} WHERE id = ?`, [switchId], (err, results) => {
-      if (err) throw err;
-      return results[0];
+    return new Promise((resolve, reject) => {
+      pool.query(`SELECT * FROM ${tableName} WHERE id = ?`, [switchId], (err, results) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(results[0]);
+        }
+      });
     });
   };
 
