@@ -170,7 +170,9 @@ knexInstance.migrate.latest().then(() => {
       res.status(response.status).send(response.data);
     } catch (error) {
       if(error.response && [304, 400, 401, 422].includes(error.response.status)) {
-        console.error(error)
+        if(error.response.status === 400) {
+          console.error(error)
+        }
         res.status(error.response.status).send(error.response.data)
         return
       }
