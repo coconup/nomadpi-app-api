@@ -229,6 +229,7 @@ knexInstance.migrate.latest().then(() => {
     }
 
     const switchItem = await getSwitchItem(switchType, switchId, res);
+    console.error('switchItem', switchItem);
     
     if(!switchItem) {
       return res.status(404).json({ error: `${switchType} not found` });
@@ -250,6 +251,8 @@ knexInstance.migrate.latest().then(() => {
         }
       });
     };
+
+    console.error('payload', payload);
 
     req.body = payload;
     forwardRequest(req, res, vanPiApiRootUrl, '/relays/state');
