@@ -170,9 +170,6 @@ knexInstance.migrate.latest().then(() => {
       res.status(response.status).send(response.data);
     } catch (error) {
       if(error.response && [304, 400, 401, 422].includes(error.response.status)) {
-        if(error.response.status === 400) {
-          console.error(error)
-        }
         res.status(error.response.status).send(error.response.data)
         return
       }
@@ -194,7 +191,7 @@ knexInstance.migrate.latest().then(() => {
       url: `${vanPiApiRootUrl}/mqtt_hub/restart`
     });
 
-    res.status(response.status).send(responseData);;
+    res.status(response.status).send(responseData);
   };
 
   // Switches state endpoints
@@ -257,8 +254,15 @@ knexInstance.migrate.latest().then(() => {
 
     console.error('payload', payload);
 
-    req.body = payload;
-    forwardRequest(req, res, vanPiApiRootUrl, '/relays/state');
+    const response = await axios({
+      method: 'post',
+      url: `${vanPiApiRootUrl}/relays/state`,
+      body: payload
+    });
+
+    console.error(response);
+
+    res.status(response.status).send(responseData);
   };
 
   const getSwitchItem = async (switchType, switchId) => {
