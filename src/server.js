@@ -241,16 +241,16 @@ knexInstance.migrate.latest().then(() => {
     } else if(switchType === 'action_switch') {
       const switches = JSON.parse(switchItem.switches);
 
-      const relayItems = Promise.all(
-        switches.map(({switch_type: relayType, switch_id: relayId, on_state}) => getSwitchItem(relayType, relayId))
-      )
-      
-      payload = relayItems.map(relayItem => ({
-        ...relayStatePayload(relayItem.switch_type, relayItem, actor, state),
-        ...state ? {state: on_state} : {}
-      }))
+      payload = await Promise.all(
+        switches.map(async ({switch_type: relayType, switch_id: relayId, on_state}) => {
+          const relayItem = await getSwitchItem(relayType, relayId);
 
-      console.error(payload)
+          return {
+            ...relayStatePayload(relayType, relayItem, actor, state),
+            ...state ? {state: on_state} : {}
+          }
+        })
+      )
     };
 
     const response = await axios({
@@ -275,10 +275,7 @@ knexInstance.migrate.latest().then(() => {
         if (err) {
           reject(err);
         } else {
-          resolve({
-            switch_type: switchType,
-            ...results[0]
-          });
+          resolve(results[0]);
         }
       });
     });
