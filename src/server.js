@@ -255,7 +255,7 @@ knexInstance.migrate.latest().then(() => {
     forwardRequest(req, res, vanPiApiRootUrl, '/relays/state');
   };
 
-  const getSwitchItem = async (switchType, switchId) => {
+  const getSwitchItem = (switchType, switchId) => {
     const tableName = {
       relay: 'relays',
       wifi_relay: 'wifi_relays',
