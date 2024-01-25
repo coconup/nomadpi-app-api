@@ -236,16 +236,16 @@ knexInstance.migrate.latest().then(() => {
 
     let payload;
 
-    if(['relay', 'wifi_relay'].includes(switch_type)) {
-      payload = [ relayStatePayload(switch_type, relayItem, actor, state) ];
-    } else if(switch_type === 'action_switch') {
+    if(['relay', 'wifi_relay'].includes(switchType)) {
+      payload = [ relayStatePayload(switchType, relayItem, actor, state) ];
+    } else if(switchType === 'action_switch') {
       const switches = JSON.parse(switchItem.switches);
       
-      payload = switches.map(({switch_type, switch_id, on_state}) => {
-        let relayItem = getSwitchItem(switch_type, switch_id);
+      payload = switches.map(({switchType, switch_id, on_state}) => {
+        let relayItem = getSwitchItem(switchType, switch_id);
 
         return {
-          ...relayStatePayload(switch_type, relayItem, actor, state),
+          ...relayStatePayload(switchType, relayItem, actor, state),
           ...state ? {state: on_state} : {}
         }
       });
