@@ -257,7 +257,7 @@ knexInstance.migrate.latest().then(() => {
     const response = await axios({
       method: 'post',
       url: `${vanPiApiRootUrl}/relays/state`,
-      body: payload
+      data: payload
     });
 
     console.error(response);
