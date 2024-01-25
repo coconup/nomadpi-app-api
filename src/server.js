@@ -194,6 +194,99 @@ knexInstance.migrate.latest().then(() => {
     res.status(response.status).send(responseData);;
   };
 
+  // Switches state endpoints
+  app.post('/relays/:id/state', authenticateUser, async (req, res) => {
+    toggleSwitch('relay', parseInt(req.params.id), req, res);
+  });
+
+  app.post('/wifi_relays/:id/state', authenticateUser, async (req, res) => {
+    toggleSwitch('wifi_relay', parseInt(req.params.id), req, res);
+  });
+
+  app.post('/action_switches/:id/state', authenticateUser, async (req, res) => {
+    toggleSwitch('action_switch', parseInt(req.params.id), req, res);
+  });
+
+  app.post('/modes/:id/state', authenticateUser, async (req, res) => {
+    const modeItem = getSwitchItem('mode', parseInt(req.params.id));
+    
+    if(!modeItem) {
+      return res.status(404).json({ error: `mode not found` });
+    }
+
+    const { mode_key } = modeItem;
+    forwardRequest(req, res, automationApiRootUrl, `/modes/${mode_key}/state`);
+  });
+
+  const toggleSwitch = async(switchType, switchId, req, res) => {
+    const {
+      actor, 
+      state
+    } = req.body;
+
+    if([actor, state].includes(undefined)) {
+      return res.status(400).json({ error: `\`actor\` and \`state\` are required parameters` });
+    }
+
+    const switchItem = getSwitchItem(switchType, switchId, res);
+    
+    if(!switchItem) {
+      return res.status(404).json({ error: `${switchType} not found` });
+    }
+
+    let payload;
+
+    if(['relay', 'wifi_relay'].includes(switch_type)) {
+      payload = [ relayStatePayload(switch_type, relayItem, actor, state) ];
+    } else if(switch_type === 'action_switch') {
+      const switches = JSON.parse(switchItem.switches);
+      
+      payload = switches.map(({switch_type, switch_id, on_state}) => {
+        let relayItem = getSwitchItem(switch_type, switch_id);
+
+        return {
+          ...relayStatePayload(switch_type, relayItem, actor, state),
+          ...state ? {state: on_state} : {}
+        }
+      });
+    };
+
+    req.body = payload;
+    forwardRequest(req, res, vanPiApiRootUrl, '/relays/state');
+  };
+
+  const getSwitchItem = async (switchType, switchId) => {
+    const tableName = {
+      relay: 'relays',
+      wifi_relay: 'wifi_relays',
+      action_switch: 'action_switches',
+      mode: 'modes'
+    }[switchType];
+
+    return pool.query(`SELECT * FROM ${tableName} WHERE id = ?`, [switchId], (err, results) => {
+      if (err) throw err;
+      return results[0];
+    });
+  };
+
+  const relayStatePayload = (relayType, relayItem, actor, state) => {
+    const {
+      relay_position,
+    } = relayItem;
+
+    return {
+      relay_type: relayType,
+      ...relayType === 'wifi_relay' ? {
+        vendor_id: relayItem.vendor_id,
+        mqtt_topic: relayItem.mqtt_topic
+      } : {},
+      relay_position,
+      actor,
+      mode: state ? 'subscribe' : 'unsubscribe',
+      ...state ? {state: true} : {}
+    }
+  };
+
   // Forward endpoints to VanPi API
   app.put('/settings/:setting_key', authenticateUser, async (req, res) => {
     forwardRequest(req, res, vanPiApiRootUrl, '/settings/:setting_key')
