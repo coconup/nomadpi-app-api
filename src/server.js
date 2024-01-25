@@ -170,6 +170,7 @@ knexInstance.migrate.latest().then(() => {
       res.status(response.status).send(response.data);
     } catch (error) {
       if(error.response && [304, 400, 401, 422].includes(error.response.status)) {
+        console.error(error)
         res.status(error.response.status).send(error.response.data)
         return
       }
@@ -208,7 +209,7 @@ knexInstance.migrate.latest().then(() => {
   });
 
   app.post('/modes/:id/state', authenticateUser, async (req, res) => {
-    const modeItem = getSwitchItem('mode', parseInt(req.params.id));
+    const modeItem = await getSwitchItem('mode', parseInt(req.params.id));
     
     if(!modeItem) {
       return res.status(404).json({ error: `mode not found` });
@@ -228,7 +229,7 @@ knexInstance.migrate.latest().then(() => {
       return res.status(400).json({ error: `\`actor\` and \`state\` are required parameters` });
     }
 
-    const switchItem = await getSwitchItem(switchType, switchId, res);
+    const switchItem = await getSwitchItem(switchType, switchId);
     console.error('switchItem', switchItem);
     
     if(!switchItem) {
@@ -242,7 +243,7 @@ knexInstance.migrate.latest().then(() => {
     } else if(switchType === 'action_switch') {
       const switches = JSON.parse(switchItem.switches);
       
-      payload = await switches.map(async ({switch_type: relayType, switch_id: relayId, on_state}) => {
+      payload = switches.map(async ({switch_type: relayType, switch_id: relayId, on_state}) => {
         let relayItem = await getSwitchItem(relayType, relayId);
 
         return {
