@@ -241,11 +241,11 @@ knexInstance.migrate.latest().then(() => {
     } else if(switchType === 'action_switch') {
       const switches = JSON.parse(switchItem.switches);
       
-      payload = switches.map(({switchType, switch_id, on_state}) => {
-        let relayItem = getSwitchItem(switchType, switch_id);
+      payload = switches.map(({switch_type: relayType, switch_id: relayId, on_state}) => {
+        let relayItem = getSwitchItem(relayType, relayId);
 
         return {
-          ...relayStatePayload(switchType, relayItem, actor, state),
+          ...relayStatePayload(relayType, relayItem, actor, state),
           ...state ? {state: on_state} : {}
         }
       });
