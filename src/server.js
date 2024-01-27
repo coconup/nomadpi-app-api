@@ -1,4 +1,3 @@
-
 const express = require('express');
 const axios = require('axios');
 const bodyParser = require('body-parser');
@@ -144,6 +143,23 @@ knexInstance.migrate.latest().then(() => {
         });
     }
   };
+
+  // Open wake word internal websocket forwarding
+  app.ws('/ws/open_wake_word', (ws, req) => {
+    const owwWebSocket = new WebSocket('ws://localhost:9002');
+
+    ws.on('message', (message) => {
+      owwWebSocket.send(message);
+    });
+
+    owwWebSocket.on('message', (message) => {
+      ws.send(message);
+    });
+
+    ws.on('close', () => {
+      owwWebSocket.close();
+    });
+  });
 
   const forwardRequest = async (req, res, rootUrl, path, options={}) => {
     try {
