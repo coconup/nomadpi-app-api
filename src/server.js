@@ -368,7 +368,7 @@ knexInstance.migrate.latest().then(() => {
   });
 
   // Forward endpoints to Butterfly AI API
-  app.post('/butterfly/engine/intent', authenticateUser, async (req, res) => {
+  app.post('/parse_intent', authenticateUser, async (req, res) => {
     
     res.status(200).json({state: "ok"});
   });
