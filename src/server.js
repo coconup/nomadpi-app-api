@@ -153,11 +153,11 @@ knexInstance.migrate.latest().then(() => {
     const owwWebSocket = new WebSocket('ws://localhost:9002/ws');
 
     ws.on('message', (message) => {
-      owwWebSocket.send(message);
+      owwWebSocket.send(String(message));
     });
 
     owwWebSocket.on('message', (message) => {
-      ws.send(message);
+      ws.send(String(message));
     });
 
     ws.on('close', () => {
