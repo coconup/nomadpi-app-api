@@ -1,4 +1,6 @@
 const express = require('express');
+const expressWs = require('express-ws');
+const WebSocket = require('ws');
 const axios = require('axios');
 const bodyParser = require('body-parser');
 const session = require('express-session');
@@ -10,6 +12,8 @@ const knex = require('knex');
 
 const app = express();
 const port = 3001;
+
+expressWs(app);
 
 if(process.env.VANPI_APP_API_ENABLE_AUTHENTICATION === undefined) throw `\`$VANPI_APP_API_ENABLE_AUTHENTICATION\` is not set`;
 if(!process.env.ENCRYPTION_KEY) throw `\`$ENCRYPTION_KEY\` is not set`;
