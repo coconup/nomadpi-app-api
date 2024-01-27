@@ -376,7 +376,7 @@ knexInstance.migrate.latest().then(() => {
     forwardRequest(req, res, butterflyApiRootUrl, '/engine/command_confirmation')
   });
 
-  app.use('/butterfly/:serviceId/*', authenticateUser, async (req, res) => {
+  app.use('/butterfly/services/:serviceId/*', authenticateUser, async (req, res) => {
     forwardRequest(req, res, butterflyApiRootUrl, '/services/:serviceId/*')
   });
 
