@@ -369,19 +369,15 @@ knexInstance.migrate.latest().then(() => {
 
   // Forward endpoints to Butterfly AI API
   app.post('/butterfly/engine/intent', authenticateUser, async (req, res) => {
-    forwardRequest(req, res, butterflyApiRootUrl, '/butterfly/engine/intent')
+    forwardRequest(req, res, butterflyApiRootUrl, '/engine/intent')
   });
 
   app.post('/butterfly/engine/command_confirmation', authenticateUser, async (req, res) => {
-    forwardRequest(req, res, butterflyApiRootUrl, '/butterfly/engine/command_confirmation')
+    forwardRequest(req, res, butterflyApiRootUrl, '/engine/command_confirmation')
   });
 
   app.use('/butterfly/:serviceId/*', authenticateUser, async (req, res) => {
-    forwardRequest(req, res, butterflyApiRootUrl, '/butterfly/:serviceId/*')
-  });
-
-  app.get('/modes/state', authenticateUser, async (req, res) => {
-    forwardRequest(req, res, automationApiRootUrl, '/modes/state')
+    forwardRequest(req, res, butterflyApiRootUrl, '/:serviceId/*')
   });
 
   // Auth routes
