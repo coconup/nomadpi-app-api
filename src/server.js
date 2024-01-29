@@ -183,10 +183,13 @@ knexInstance.migrate.latest().then(() => {
         targetPath.replace(/^\/+/, '')
       ].join('/');
 
+      const queryString = require('qs').stringify(req.query);
+      const fullUrl = queryString ? `${url}?${queryString}` : url;
+
       // Make a request to the target server
       const response = await axios({
         method: req.method,
-        url,
+        url: fullUrl,
         headers: req.headers,
         data: req.body,
         ...options
