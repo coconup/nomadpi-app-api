@@ -386,7 +386,7 @@ knexInstance.migrate.latest().then(() => {
 
   // Forward endpoints to Services AI API
   app.use('/services/credentials', authenticateUser, async (req, res) => {
-    forwardRequest(req, res, servicesApiRootUrl, '/services/credentials')
+    forwardRequest(req, res, servicesApiRootUrl, '/credentials')
   });
 
   app.use('/services/:serviceId/:endpoint', authenticateUser, async (req, res) => {
