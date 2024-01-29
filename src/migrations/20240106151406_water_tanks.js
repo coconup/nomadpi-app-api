@@ -10,6 +10,7 @@ exports.up = function(knex) {
     table.json('connection_params').notNullable();
     table.string('volumetric_type').notNullable();
     table.json('volumetric_params').notNullable();
+    table.json('water_tank_settings').notNullable();
   });
 };
 

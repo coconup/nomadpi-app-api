@@ -28,13 +28,15 @@ const [
   corsWhitelist,
   vanPiApiRootUrl,
   automationApiRootUrl,
-  butterflyApiRootUrl
+  butterflyApiRootUrl,
+  servicesApiRootUrl
 ] = [
   process.env.ENCRYPTION_KEY,
   process.env.VANPI_APP_API_ALLOWED_DOMAINS,
   process.env.VANPI_API_ROOT_URL,
   process.env.AUTOMATION_API_ROOT_URL,
-  process.env.BUTTERFLY_API_ROOT_URL
+  process.env.BUTTERFLY_API_ROOT_URL,
+  process.env.SERVICES_API_ROOT_URL
 ];
 
 const enableAuthentication = (/true/).test(process.env.VANPI_APP_API_ENABLE_AUTHENTICATION);
@@ -321,7 +323,7 @@ knexInstance.migrate.latest().then(() => {
     }
   };
 
-  // Forward endpoints to VanPi API
+  // Forward endpoints to Core API
   app.put('/settings/:setting_key', authenticateUser, async (req, res) => {
     forwardRequest(req, res, vanPiApiRootUrl, '/settings/:setting_key')
   });
@@ -378,6 +380,15 @@ knexInstance.migrate.latest().then(() => {
 
   app.use('/butterfly/services/:serviceId/:functionName', authenticateUser, async (req, res) => {
     forwardRequest(req, res, butterflyApiRootUrl, '/services/:serviceId/:functionName')
+  });
+
+  // Forward endpoints to Services AI API
+  app.use('/services/credentials', authenticateUser, async (req, res) => {
+    forwardRequest(req, res, servicesApiRootUrl, '/services/credentials')
+  });
+
+  app.use('/services/:serviceId/:endpoint', authenticateUser, async (req, res) => {
+    forwardRequest(req, res, servicesApiRootUrl, '/services/:serviceId/:endpoint')
   });
 
   // Auth routes
