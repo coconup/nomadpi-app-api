@@ -195,7 +195,7 @@ knexInstance.migrate.latest().then(() => {
       // Forward the target server's response to the client
       res.status(response.status).send(response.data);
     } catch (error) {
-      if(error.response && [304, 400, 401, 422].includes(error.response.status)) {
+      if(error.response && [304, 400, 401, 404, 422].includes(error.response.status)) {
         res.status(error.response.status).send(error.response.data)
         return
       }
