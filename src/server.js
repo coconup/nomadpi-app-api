@@ -22,6 +22,7 @@ if(!process.env.VANPI_API_ROOT_URL) throw `\`$VANPI_API_ROOT_URL\` is not set`;
 if(!process.env.AUTOMATION_API_ROOT_URL) throw `\`$AUTOMATION_API_ROOT_URL\` is not set`;
 if(!process.env.BUTTERFLY_API_ROOT_URL) throw `\`$BUTTERFLY_API_ROOT_URL\` is not set`;
 if(!process.env.SERVICES_API_ROOT_URL) throw `\`$SERVICES_API_ROOT_URL\` is not set`;
+if(!process.env.FRIGATE_API_ROOT_URL) throw `\`$FRIGATE_API_ROOT_URL\` is not set`;
 
 // Set constants
 
@@ -31,14 +32,16 @@ const [
   vanPiApiRootUrl,
   automationApiRootUrl,
   butterflyApiRootUrl,
-  servicesApiRootUrl
+  servicesApiRootUrl,
+  frigateApiRootUrl
 ] = [
   process.env.ENCRYPTION_KEY,
   process.env.VANPI_APP_API_ALLOWED_DOMAINS,
   process.env.VANPI_API_ROOT_URL,
   process.env.AUTOMATION_API_ROOT_URL,
   process.env.BUTTERFLY_API_ROOT_URL,
-  process.env.SERVICES_API_ROOT_URL
+  process.env.SERVICES_API_ROOT_URL,
+  process.env.FRIGATE_API_ROOT_URL
 ];
 
 const enableAuthentication = (/true/).test(process.env.VANPI_APP_API_ENABLE_AUTHENTICATION);
@@ -387,7 +390,12 @@ knexInstance.migrate.latest().then(() => {
     forwardRequest(req, res, butterflyApiRootUrl, '/services/:serviceId/:functionName')
   });
 
-  // Forward endpoints to Services AI API
+  // Forward endpoints to Frigate API
+  app.use('/frigate/*', authenticateUser, async (req, res) => {
+    forwardRequest(req, res, frigateApiRootUrl, req.url.replace(/^\/frigate/, ''))
+  });
+
+  // Forward endpoints to Services API
   app.use('/services/credentials', authenticateUser, async (req, res) => {
     forwardRequest(req, res, servicesApiRootUrl, '/credentials')
   });
