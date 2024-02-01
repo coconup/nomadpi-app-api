@@ -408,12 +408,12 @@ knexInstance.migrate.latest().then(() => {
       console.log('JPG requested')
       options = { responseType: "arraybuffer" };
       callback = (response) => {
-        console.log('JPG response', response)
+        console.log('JPG response');
         res.status(response.status).set({ 'Content-Type': 'image/jpeg' }).send(response.data);
       }
     };
     
-    forwardRequest(req, res, frigateApiRootUrl, frigateApiUrl, {}, callback);
+    forwardRequest(req, res, frigateApiRootUrl, frigateApiUrl, options, callback);
   });
 
   // Forward endpoints to Services API
