@@ -407,7 +407,7 @@ knexInstance.migrate.latest().then(() => {
       console.log('JPG requested')
       callback = (response) => {
         console.log('JPG response')
-        res.status(response.status).set({ 'Content-Type': 'image/jpeg' }).sendFile(response.data);
+        res.status(response.status).set({ 'Content-Type': 'image/jpeg' }).send(response.data);
       }
     };
     
