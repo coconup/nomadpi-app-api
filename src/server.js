@@ -402,9 +402,11 @@ knexInstance.migrate.latest().then(() => {
 
     const jpgRegex = /\.(jpg|jpeg)(\?.*)?$/i;
 
+    let options;
     let callback;
     if(jpgRegex.test(frigateApiUrl)) {
       console.log('JPG requested')
+      options = { responseType: "arraybuffer" };
       callback = (response) => {
         console.log('JPG response')
         res.status(response.status).set({ 'Content-Type': 'image/jpeg' }).send(response.data);
