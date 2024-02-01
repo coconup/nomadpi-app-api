@@ -393,6 +393,7 @@ knexInstance.migrate.latest().then(() => {
   // Forward endpoints to Frigate API
   app.use('/frigate/*', authenticateUser, async (req, res) => {
     const frigateApiUrl = req.url.replace(/^\/frigate/, '/api');
+    console.log('frigate request', req);
     console.log('frigateApiUrl', frigateApiUrl);
     forwardRequest(req, res, frigateApiRootUrl, frigateApiUrl);
   });
