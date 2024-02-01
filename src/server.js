@@ -411,7 +411,7 @@ knexInstance.migrate.latest().then(() => {
       }
     };
     
-    forwardRequest(req, res, frigateApiRootUrl, frigateApiUrl, callback);
+    forwardRequest(req, res, frigateApiRootUrl, frigateApiUrl, {}, callback);
   });
 
   // Forward endpoints to Services API
