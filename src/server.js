@@ -174,7 +174,7 @@ knexInstance.migrate.latest().then(() => {
     });
   });
 
-  const forwardRequest = async (req, res, rootUrl, path, options={}) => {
+  const forwardRequest = async (req, res, rootUrl, path, options={}, callback) => {
     try {
       const params = path.match(/:\w+/g) || [];
 
@@ -198,8 +198,11 @@ knexInstance.migrate.latest().then(() => {
         ...options
       });
 
-      // Forward the target server's response to the client
-      res.status(response.status).set(response.headers).send(response.data);
+      if(callback) {
+        callback(response)
+      } else {
+        res.status(response.status).send(response.data);  
+      }
     } catch (error) {
       if(error.response && [304, 400, 401, 404, 422].includes(error.response.status)) {
         res.status(error.response.status).send(error.response.data)
@@ -396,9 +399,17 @@ knexInstance.migrate.latest().then(() => {
 
     // https://github.com/blakeblackshear/frigate/blob/dev/frigate/http.py#L86
     delete req.headers.origin;
-    console.log('frigate headers', req.headers);
-    console.log('frigateApiUrl', frigateApiUrl);
-    forwardRequest(req, res, frigateApiRootUrl, frigateApiUrl);
+
+    const jpgRegex = /\.(jpg|jpeg)(\?.*)?$/i;
+
+    let callback;
+    if(jpgRegex.test(frigateApiUrl)) {
+      callback = (response) => {
+        res.status(response.status).set({ 'Content-Type': 'image/jpeg' }).send(response.data);
+      }
+    };
+    
+    forwardRequest(req, res, frigateApiRootUrl, frigateApiUrl, callback);
   });
 
   // Forward endpoints to Services API
