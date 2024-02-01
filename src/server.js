@@ -178,7 +178,7 @@ knexInstance.migrate.latest().then(() => {
     try {
       const params = path.match(/:\w+/g) || [];
 
-      let targetPath = path;
+      let targetPath = path.replace(/\?.*$/, '');
       params.forEach(param => targetPath = targetPath.replace(`${param}`, req.params[param.replace(':', '')]));
 
       const url = [
@@ -405,10 +405,8 @@ knexInstance.migrate.latest().then(() => {
     let options;
     let callback;
     if(jpgRegex.test(frigateApiUrl)) {
-      console.log('JPG requested')
       options = { responseType: "arraybuffer" };
       callback = (response) => {
-        console.log('JPG response');
         res.status(response.status).set({ 'Content-Type': 'image/jpeg' }).send(response.data);
       }
     };
