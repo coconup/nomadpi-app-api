@@ -58,6 +58,11 @@ exports.up = function(knex) {
         label: 'Alarm notifications',
         type: 'json'
       },
+      {
+        setting_key: 'notifications_whatsapp_number',
+        label: 'WhatsApp number',
+        type: 'string'
+      },
     ]);
   });;
 };

@@ -423,6 +423,10 @@ knexInstance.migrate.latest().then(() => {
     forwardRequest(req, res, servicesApiRootUrl, '/credentials')
   });
 
+  app.use('/services/credentials/:id', authenticateUser, async (req, res) => {
+    forwardRequest(req, res, servicesApiRootUrl, '/credentials/:id')
+  });
+
   app.use('/services/:serviceId/:endpoint', authenticateUser, async (req, res) => {
     forwardRequest(req, res, servicesApiRootUrl, '/services/:serviceId/:endpoint')
   });
