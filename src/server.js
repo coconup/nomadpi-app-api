@@ -339,8 +339,12 @@ knexInstance.migrate.latest().then(() => {
     forwardRequest(req, res, vanPiApiRootUrl, '/settings/:setting_key')
   });
 
-  app.post('/relays/state', authenticateUser, async (req, res) => {
-    forwardRequest(req, res, vanPiApiRootUrl, '/relays/state')
+  app.post('/alarm/state', authenticateUser, async (req, res) => {
+    forwardRequest(req, res, vanPiApiRootUrl, '/alarm/state')
+  });
+
+  app.get('/alarm/state', authenticateUser, async (req, res) => {
+    forwardRequest(req, res, vanPiApiRootUrl, '/alarm/state')
   });
 
   app.get('/relays/state', authenticateUser, async (req, res) => {
