@@ -201,19 +201,15 @@ knexInstance.migrate.latest().then(() => {
       websocket.open(url);
 
       websocket.on('open', () => {
-          console.log(`${resourceName} connected to ${url}`)
+        console.log(`${resourceName} connected to ${url}`)
       });
 
       websocket.on('reconnect', () => {
         console.log(`${resourceName} reconnected to ${url}`)
       });
 
-      ws.on('message', (message) => {
-        try {
-          websocket.send(message);
-        } catch(error) {
-
-        }
+      websocket.on('message', (message) => {
+        ws.send(message);
       });
 
       websocket.on('error', (err) => {
