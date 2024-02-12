@@ -44,6 +44,7 @@ const [
 ];
 
 const vanPiApiWsRootUrl = `${vanPiApiRootUrl.replace('https://', 'wss://').replace('http://', 'ws://')}/ws`;
+const automationApiWsRootUrl = `${automationApiRootUrl.replace('https://', 'wss://').replace('http://', 'ws://')}/ws`;
 
 const enableAuthentication = (/true/).test(process.env.VANPI_APP_API_ENABLE_AUTHENTICATION);
 
@@ -194,7 +195,8 @@ knexInstance.migrate.latest().then(() => {
   ].forEach(resourceName => {
     app.ws(`/ws/${resourceName}/state`, (ws, req) => {
       const connect = () => {
-        const url = `${vanPiApiWsRootUrl}/${resourceName}/state`;
+        const baseUrl = resourceName === 'modes' ? automationApiWsRootUrl : vanPiApiWsRootUrl;
+        const url = `${baseUrl}/${resourceName}/state`;
 
         console.log(`connecting to ${url}`);
         
