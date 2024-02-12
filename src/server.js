@@ -180,10 +180,11 @@ knexInstance.migrate.latest().then(() => {
   };
 
   const relaysStateWebsocket = createReconnectingWebSocket(`${vanPiApiWsRootUrl}/relays/state`, '/ws/relays/state');
-  const openWakeWordWebsocket = createReconnectingWebSocket('ws://localhost:9002/ws', '/ws/open_wake_word');
 
   // Open wake word internal websocket forwarding
   app.ws('/ws/open_wake_word', (ws, req) => {
+    const openWakeWordWebsocket = new WebSocket('ws://localhost:9002/ws');
+
     ws.on('message', (message) => {
       try {
         openWakeWordWebsocket.send(message);
