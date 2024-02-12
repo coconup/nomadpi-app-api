@@ -193,23 +193,35 @@ knexInstance.migrate.latest().then(() => {
     'alarm'
   ].forEach(resourceName => {
     app.ws(`/ws/${resourceName}/state`, (ws, req) => {
-      const websocket = new WebSocket(`${vanPiApiWsRootUrl}/${resourceName}/state`);
+      const connect = () => {
+        const url = `${vanPiApiWsRootUrl}/${resourceName}/state`;
 
-      ws.on('message', (message) => {
-        try {
-          websocket.send(message);
-        } catch(error) {
+        console.log(`connecting to ${url}`);
+        
+        const websocket = new WebSocket(url);
 
-        }
-      });
+        ws.on('message', (message) => {
+          try {
+            websocket.send(message);
+          } catch(error) {
 
-      websocket.on('message', (message) => {
-        ws.send(String(message));
-      });
+          }
+        });
 
-      ws.on('close', () => {
-        websocket.close();
-      });
+        ws.on('error', (err) => {
+          console.log(`${resourceName} websocket error: ${error}`);
+        });
+
+        websocket.on('message', (message) => {
+          ws.send(String(message));
+        });
+
+        ws.on('close', () => {
+          websocket.close();
+          setTimeout(connect, 5000);
+        });
+      };
+      connect();
     });
   });
 
