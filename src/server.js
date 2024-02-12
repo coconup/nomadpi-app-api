@@ -193,9 +193,9 @@ knexInstance.migrate.latest().then(() => {
     'water_tanks',
     'alarm'
   ].forEach(resourceName => {
-    app.ws(`/ws/${resourceName}/state`, (ws, req) => {
-      const websocket = new WsReconnect({ reconnectDelay: 5000 });
+    const websocket = new WsReconnect({ reconnectDelay: 5000 });
 
+    app.ws(`/ws/${resourceName}/state`, (ws, req) => {
       const baseUrl = resourceName === 'modes' ? automationApiWsRootUrl : vanPiApiWsRootUrl;
       const url = `${baseUrl}/${resourceName}/state`;
       websocket.open(url);
