@@ -219,6 +219,8 @@ knexInstance.migrate.latest().then(() => {
       websocket.on('close', () => {
         console.log(`${resourceName} websocket closed`);
       });
+
+      ws.on('close', () => websocket.close());
     });
   });
 
