@@ -1,7 +1,7 @@
 const express = require('express');
 const expressWs = require('express-ws');
 const WebSocket = require('ws');
-const ReconnectWebSocket = require('reconnect-websocket');
+import { WsReconnect } from 'websocket-reconnect';
 const axios = require('axios');
 const bodyParser = require('body-parser');
 const session = require('express-session');
@@ -194,36 +194,35 @@ knexInstance.migrate.latest().then(() => {
     'alarm'
   ].forEach(resourceName => {
     app.ws(`/ws/${resourceName}/state`, (ws, req) => {
-      const connect = () => {
-        const baseUrl = resourceName === 'modes' ? automationApiWsRootUrl : vanPiApiWsRootUrl;
-        const url = `${baseUrl}/${resourceName}/state`;
+      const ws = new WsReconnect({ reconnectDelay: 5000 });
 
-        console.log(`connecting to ${url}`);
-        
-        const websocket = new WebSocket(url);
+      const baseUrl = resourceName === 'modes' ? automationApiWsRootUrl : vanPiApiWsRootUrl;
+      const url = `${baseUrl}/${resourceName}/state`;
+      ws.open(url);
 
-        ws.on('message', (message) => {
-          try {
-            websocket.send(message);
-          } catch(error) {
+      ws.on('open', () => {
+          console.log(`connected to ${url}`)
+      });
 
-          }
-        });
+      ws.on('reconnect', () => {
+        console.log(`reconnected to ${url}`)
+      });
 
-        ws.on('error', (err) => {
-          console.log(`${resourceName} websocket error: ${error}`);
-        });
+      ws.on('message', (message) => {
+        try {
+          websocket.send(message);
+        } catch(error) {
 
-        websocket.on('message', (message) => {
-          ws.send(String(message));
-        });
+        }
+      });
 
-        ws.on('close', () => {
-          websocket.close();
-          setTimeout(connect, 5000);
-        });
-      };
-      connect();
+      ws.on('error', (err) => {
+        console.log(`${resourceName} websocket error: ${error}`);
+      });
+
+      ws.on('close', () => {
+          interval && clearInterval(interval);
+      });
     });
   });
 

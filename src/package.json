@@ -17,7 +17,7 @@
     "knex": "^3.1.0",
     "mysql2": "^2.3.0",
     "qs": "^6.11.2",
-    "reconnect-websocket": "^1.0.0",
+    "websocket-reconnect": "^1.0.10",
     "ws": "^8.16.0"
   }
 }
