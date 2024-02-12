@@ -195,9 +195,9 @@ knexInstance.migrate.latest().then(() => {
 
     ws.on('message', (message) => {
       try {
-        openWakeWordWebsocket.send(message);
+        openWakeWordWebsocket.send(message.data);
       } catch(error) {
-        
+
       }
     });
 
