@@ -182,33 +182,35 @@ knexInstance.migrate.latest().then(() => {
     });
   });
 
+  [
+    'relays',
+    'modes',
+    'gps',
+    'batteries',
+    'solar_charge_controllers',
+    'temperature_sensors',
+    'water_tanks',
+    'alarm'
+  ].forEach(resourceName => {
+    app.ws(`/ws/${resourceName}/state`, (ws, req) => {
+      const websocket = new WebSocket(`${vanPiApiWsRootUrl}/${resourceName}/state`);
 
-  app.ws('/ws/relays/state', (ws, req) => {
-    const websocket = new WebSocket(`${vanPiApiWsRootUrl}/relays/state`);
+      ws.on('message', (message) => {
+        try {
+          websocket.send(message);
+        } catch(error) {
 
-    ws.on('message', (message) => {
-      try {
-        websocket.send(message);
-      } catch(error) {
+        }
+      });
 
-      }
+      websocket.on('message', (message) => {
+        ws.send(String(message));
+      });
+
+      ws.on('close', () => {
+        websocket.close();
+      });
     });
-
-    websocket.on('message', (message) => {
-      ws.send(String(message));
-    });
-
-    ws.on('close', () => {
-      websocket.close();
-    });
-  });
-
-
-  // Handle incoming messages from clients and send them to the external WebSocket
-  app.ws('/ws/relays/state', (ws) => {
-    // ws.on('message', (message) => {
-    //   relaysStateWebsocket.send(message.data);
-    // });
   });
 
   const forwardError = (error, res) => {
