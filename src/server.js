@@ -170,6 +170,7 @@ knexInstance.migrate.latest().then(() => {
     ws.on('message', (message) => {
       getWss(path).clients.forEach((client) => {
         if (client.readyState === WebSocket.OPEN) {
+          console.log('MSG1', path, message.data)
           client.send(message.data);
         }
       });
@@ -192,6 +193,7 @@ knexInstance.migrate.latest().then(() => {
     // });
 
     openWakeWordWebsocket.on('message', (message) => {
+      console.log('MSG2', path, message.data)
       ws.send(String(message.data));
     });
 
