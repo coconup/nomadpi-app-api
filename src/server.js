@@ -67,12 +67,9 @@ const createReconnectingWebSocket = (url, path) => {
   const ws = new ReconnectWebSocket(url, [], options);
   
   ws.on('message', (message) => {
-    console.log('MESSAGE RECEIVED', path, message.data)
-
-    // Forward the message to all connected clients on the specified path
     getWss(path).clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
-        client.send(String(message));
+        client.send(message.data);
       }
     });
   });
@@ -82,7 +79,7 @@ const createReconnectingWebSocket = (url, path) => {
 
 const relaysStateWebsocketUrl = `${vanPiApiWsRootUrl}/relays/state`;
 
-console.log(`connecting to websocker ${relaysStateWebsocketUrl}`);
+console.log(`connecting to websocket ${relaysStateWebsocketUrl}`);
 
 const relaysStateWebsocket = createReconnectingWebSocket(relaysStateWebsocketUrl, '/ws/relays/state');
 
