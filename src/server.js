@@ -195,7 +195,7 @@ knexInstance.migrate.latest().then(() => {
     });
 
     websocket.on('message', (message) => {
-      ws.send(message);
+      ws.send(String(message));
     });
 
     ws.on('close', () => {
