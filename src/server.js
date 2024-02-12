@@ -194,7 +194,11 @@ knexInstance.migrate.latest().then(() => {
     const openWakeWordWebsocket = new ReconnectWebSocket('ws://localhost:9002/ws');
 
     ws.on('message', (message) => {
-      openWakeWordWebsocket.send(message);
+      try {
+        openWakeWordWebsocket.send(message);
+      } catch(error) {
+        
+      }
     });
 
     openWakeWordWebsocket.on('message', (message) => {
