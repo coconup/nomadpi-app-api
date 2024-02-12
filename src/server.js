@@ -60,7 +60,12 @@ if(Object.values(databaseConfig).find(v => !v)) {
 
 // Initialize WebSockets
 const { getWss } = expressWs(app);
-// const relaysStateWebsocket = new WebSocket(`${vanPiApiWsRootUrl}/relays/state`);
+
+const relaysStateWebsocketUrl = `${vanPiApiWsRootUrl}/relays/state`;
+
+console.log(`connecting to websocker ${relaysStateWebsocketUrl}`);
+
+const relaysStateWebsocket = new WebSocket(relaysStateWebsocketUrl);
 
 // Handle incoming messages from the external WebSocket
 // const handleExternalWebSocket = (externalWebSocket, path) => {
