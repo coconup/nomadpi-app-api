@@ -67,6 +67,8 @@ const createReconnectingWebSocket = (url, path) => {
   const ws = new ReconnectWebSocket(url, [], options);
   
   ws.on('message', (message) => {
+    console.log('MESSAGE RECEIVED', path, message)
+
     // Forward the message to all connected clients on the specified path
     getWss(path).clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
@@ -84,12 +86,12 @@ console.log(`connecting to websocker ${relaysStateWebsocketUrl}`);
 
 const relaysStateWebsocket = createReconnectingWebSocket(relaysStateWebsocketUrl, '/ws/relays/state');
 
-// Handle incoming messages from clients and send them to the external WebSocket
-app.ws('/ws/relays/state', (ws) => {
-  ws.on('message', (message) => {
-    relaysStateWebsocket.send(message);
-  });
-});
+// // Handle incoming messages from clients and send them to the external WebSocket
+// app.ws('/ws/relays/state', (ws) => {
+//   ws.on('message', (message) => {
+//     relaysStateWebsocket.send(message);
+//   });
+// });
 
 // Add headers before the routes are defined
 app.use(function (req, res, next) {
