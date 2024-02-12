@@ -13,8 +13,6 @@ const knex = require('knex');
 const app = express();
 const port = 3001;
 
-expressWs(app);
-
 if(process.env.VANPI_APP_API_ENABLE_AUTHENTICATION === undefined) throw `\`$VANPI_APP_API_ENABLE_AUTHENTICATION\` is not set`;
 if(!process.env.ENCRYPTION_KEY) throw `\`$ENCRYPTION_KEY\` is not set`;
 if(!process.env.VANPI_APP_API_ALLOWED_DOMAINS) throw `\`$VANPI_APP_API_ALLOWED_DOMAINS\` is not set`;
@@ -44,6 +42,8 @@ const [
   process.env.FRIGATE_API_ROOT_URL
 ];
 
+const vanPiApiWsRootUrl = `${vanPiApiRootUrl.replace('https://', 'wss://').replace('http://', 'ws://')}/ws`;
+
 const enableAuthentication = (/true/).test(process.env.VANPI_APP_API_ENABLE_AUTHENTICATION);
 
 // Fetch database credentials from environment variables
@@ -57,6 +57,32 @@ const databaseConfig = {
 if(Object.values(databaseConfig).find(v => !v)) {
   throw `One or more of the database variables are not set: ${Object.keys(databaseConfig).map(k => `\`$${k}\``).join(', ')}`;
 };
+
+// Initialize WebSockets
+const { getWss } = expressWs(app);
+const relaysStateWebsocket = new WebSocket(`${vanPiApiWsRootUrl}/relays/state`);
+
+// Handle incoming messages from the external WebSocket
+const handleExternalWebSocket = (externalWebSocket, path) => {
+  externalWebSocket.on('message', (message) => {
+    // Forward the message to all connected clients on the specified path
+    getWss(path).clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(message);
+      }
+    });
+  });
+};
+
+// Handle incoming messages from external WebSocket servers
+handleExternalWebSocket(relaysStateWebsocket, '/ws/relays/state');
+
+// Handle incoming messages from clients and send them to the external WebSocket
+app.ws('/ws/relays/state', (ws) => {
+  ws.on('message', (message) => {
+    relaysStateWebsocket.send(message);
+  });
+});
 
 // Add headers before the routes are defined
 app.use(function (req, res, next) {
@@ -160,6 +186,23 @@ knexInstance.migrate.latest().then(() => {
   // Open wake word internal websocket forwarding
   app.ws('/ws/open_wake_word', (ws, req) => {
     const owwWebSocket = new WebSocket('ws://localhost:9002/ws');
+
+    ws.on('message', (message) => {
+      owwWebSocket.send(message);
+    });
+
+    owwWebSocket.on('message', (message) => {
+      ws.send(String(message));
+    });
+
+    ws.on('close', () => {
+      owwWebSocket.close();
+    });
+  });
+
+  // WebSocket forwarding
+  app.ws('/ws/relays/state', (ws, req) => {
+    
 
     ws.on('message', (message) => {
       owwWebSocket.send(message);
