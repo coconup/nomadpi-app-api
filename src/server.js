@@ -161,26 +161,6 @@ knexInstance.migrate.latest().then(() => {
     }
   };
 
-  const createReconnectingWebSocket = (url, path) => {
-    console.log(`connecting to websocket ${url}`);
-
-    const options = { WebSocket: ReconnectWebSocket };
-    const ws = new ReconnectWebSocket(url, [], options);
-    
-    ws.on('message', (message) => {
-      getWss(path).clients.forEach((client) => {
-        if (client.readyState === WebSocket.OPEN) {
-          console.log('MSG1', path, message.data)
-          client.send(message.data);
-        }
-      });
-    });
-
-    return ws;
-  };
-
-  const relaysStateWebsocket = createReconnectingWebSocket(`${vanPiApiWsRootUrl}/relays/state`, '/ws/relays/state');
-
   // Open wake word internal websocket forwarding
   app.ws('/ws/open_wake_word', (ws, req) => {
     const openWakeWordWebsocket = new WebSocket('ws://localhost:9002/ws');
@@ -199,6 +179,27 @@ knexInstance.migrate.latest().then(() => {
 
     ws.on('close', () => {
       openWakeWordWebsocket.close();
+    });
+  });
+
+
+  app.ws('/ws/relays/state', (ws, req) => {
+    const websocket = new WebSocket(`${vanPiApiWsRootUrl}/relays/state`);
+
+    ws.on('message', (message) => {
+      try {
+        websocket.send(message);
+      } catch(error) {
+
+      }
+    });
+
+    websocket.on('message', (message) => {
+      ws.send(message);
+    });
+
+    ws.on('close', () => {
+      websocket.close();
     });
   });
 
