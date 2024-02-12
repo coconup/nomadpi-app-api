@@ -20,9 +20,9 @@ if(!process.env.ENCRYPTION_KEY) throw `\`$ENCRYPTION_KEY\` is not set`;
 if(!process.env.VANPI_APP_API_ALLOWED_DOMAINS) throw `\`$VANPI_APP_API_ALLOWED_DOMAINS\` is not set`;
 if(!process.env.VANPI_API_ROOT_URL) throw `\`$VANPI_API_ROOT_URL\` is not set`;
 if(!process.env.AUTOMATION_API_ROOT_URL) throw `\`$AUTOMATION_API_ROOT_URL\` is not set`;
-// if(!process.env.BUTTERFLY_API_ROOT_URL) throw `\`$BUTTERFLY_API_ROOT_URL\` is not set`;
-// if(!process.env.SERVICES_API_ROOT_URL) throw `\`$SERVICES_API_ROOT_URL\` is not set`;
-// if(!process.env.FRIGATE_API_ROOT_URL) throw `\`$FRIGATE_API_ROOT_URL\` is not set`;
+if(!process.env.BUTTERFLY_API_ROOT_URL) throw `\`$BUTTERFLY_API_ROOT_URL\` is not set`;
+if(!process.env.SERVICES_API_ROOT_URL) throw `\`$SERVICES_API_ROOT_URL\` is not set`;
+if(!process.env.FRIGATE_API_ROOT_URL) throw `\`$FRIGATE_API_ROOT_URL\` is not set`;
 
 // Set constants
 
@@ -174,6 +174,22 @@ knexInstance.migrate.latest().then(() => {
     });
   });
 
+  const forwardError(error, res) => {
+    if(error.response && [304, 400, 401, 404, 422].includes(error.response.status)) {
+      res.status(error.response.status).send(error.response.data)
+      return
+    }
+
+    console.error(`Error forwarding request`, error.message);
+    if(error.response) {
+      console.error(`Status`, error.response.status);
+      if(error.response.data) console.error(error.response.data);
+    } else {
+      console.error(error)
+    };
+    res.status(500).send('Internal Server Error');
+  }
+
   const forwardRequest = async (req, res, rootUrl, path, options={}, callback) => {
     try {
       const params = path.match(/:\w+/g) || [];
@@ -204,19 +220,7 @@ knexInstance.migrate.latest().then(() => {
         res.status(response.status).send(response.data);  
       }
     } catch (error) {
-      if(error.response && [304, 400, 401, 404, 422].includes(error.response.status)) {
-        res.status(error.response.status).send(error.response.data)
-        return
-      }
-
-      console.error(`Error forwarding request`, error.message);
-      if(error.response) {
-        console.error(`Status`, error.response.status);
-        if(error.response.data) console.error(error.response.data);
-      } else {
-        console.error(error)
-      };
-      res.status(500).send('Internal Server Error');
+      forwardError(error, res);
     }
   };
 
@@ -263,38 +267,42 @@ knexInstance.migrate.latest().then(() => {
       return res.status(400).json({ error: `\`actor\` and \`state\` are required parameters` });
     }
 
-    const switchItem = await getSwitchItem(switchType, switchId);
+    try {
+      const switchItem = await getSwitchItem(switchType, switchId);
     
-    if(!switchItem) {
-      return res.status(404).json({ error: `${switchType} not found` });
+      if(!switchItem) {
+        return res.status(404).json({ error: `${switchType} not found` });
+      }
+
+      let payload;
+
+      if(['relay', 'wifi_relay'].includes(switchType)) {
+        payload = [ relayStatePayload(switchType, switchItem, actor, state) ];
+      } else if(switchType === 'action_switch') {
+        const switches = JSON.parse(switchItem.switches);
+
+        payload = await Promise.all(
+          switches.map(async ({switch_type: relayType, switch_id: relayId, on_state}) => {
+            const relayItem = await getSwitchItem(relayType, relayId);
+
+            return {
+              ...relayStatePayload(relayType, relayItem, actor, state),
+              ...state ? {state: on_state} : {}
+            }
+          })
+        )
+      };
+
+      const response = await axios({
+        method: 'post',
+        url: `${vanPiApiRootUrl}/relays/state`,
+        data: payload
+      });
+
+      res.status(response.status).send(response.data);
+    } catch (error) {
+      forwardError(error, res);
     }
-
-    let payload;
-
-    if(['relay', 'wifi_relay'].includes(switchType)) {
-      payload = [ relayStatePayload(switchType, switchItem, actor, state) ];
-    } else if(switchType === 'action_switch') {
-      const switches = JSON.parse(switchItem.switches);
-
-      payload = await Promise.all(
-        switches.map(async ({switch_type: relayType, switch_id: relayId, on_state}) => {
-          const relayItem = await getSwitchItem(relayType, relayId);
-
-          return {
-            ...relayStatePayload(relayType, relayItem, actor, state),
-            ...state ? {state: on_state} : {}
-          }
-        })
-      )
-    };
-
-    const response = await axios({
-      method: 'post',
-      url: `${vanPiApiRootUrl}/relays/state`,
-      data: payload
-    });
-
-    res.status(response.status).send(response.data);
   };
 
   const getSwitchItem = async (switchType, switchId) => {
