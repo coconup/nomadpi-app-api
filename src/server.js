@@ -1,6 +1,7 @@
 const express = require('express');
 const expressWs = require('express-ws');
 const WebSocket = require('ws');
+const ReconnectWebSocket = require('reconnect-websocket');
 const axios = require('axios');
 const bodyParser = require('body-parser');
 const session = require('express-session');
@@ -61,33 +62,34 @@ if(Object.values(databaseConfig).find(v => !v)) {
 // Initialize WebSockets
 const { getWss } = expressWs(app);
 
+const createReconnectingWebSocket = (url, path) => {
+  const options = { WebSocket: ReconnectWebSocket };
+  const ws = new ReconnectWebSocket(url, [], options);
+  
+  ws.on('message', (message) => {
+    // Forward the message to all connected clients on the specified path
+    getWss(path).clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(message);
+      }
+    });
+  });
+
+  return ws;
+};
+
 const relaysStateWebsocketUrl = `${vanPiApiWsRootUrl}/relays/state`;
 
 console.log(`connecting to websocker ${relaysStateWebsocketUrl}`);
 
-const relaysStateWebsocket = new WebSocket(relaysStateWebsocketUrl);
+const relaysStateWebsocket = createReconnectingWebSocket(relaysStateWebsocketUrl, '/ws/relays/state');
 
-// Handle incoming messages from the external WebSocket
-// const handleExternalWebSocket = (externalWebSocket, path) => {
-//   externalWebSocket.on('message', (message) => {
-//     // Forward the message to all connected clients on the specified path
-//     getWss(path).clients.forEach((client) => {
-//       if (client.readyState === WebSocket.OPEN) {
-//         client.send(message);
-//       }
-//     });
-//   });
-// };
-
-// // Handle incoming messages from external WebSocket servers
-// handleExternalWebSocket(relaysStateWebsocket, '/ws/relays/state');
-
-// // Handle incoming messages from clients and send them to the external WebSocket
-// app.ws('/ws/relays/state', (ws) => {
-//   ws.on('message', (message) => {
-//     relaysStateWebsocket.send(message);
-//   });
-// });
+// Handle incoming messages from clients and send them to the external WebSocket
+app.ws('/ws/relays/state', (ws) => {
+  ws.on('message', (message) => {
+    relaysStateWebsocket.send(message);
+  });
+});
 
 // Add headers before the routes are defined
 app.use(function (req, res, next) {
@@ -191,23 +193,6 @@ knexInstance.migrate.latest().then(() => {
   // Open wake word internal websocket forwarding
   app.ws('/ws/open_wake_word', (ws, req) => {
     const owwWebSocket = new WebSocket('ws://localhost:9002/ws');
-
-    ws.on('message', (message) => {
-      owwWebSocket.send(message);
-    });
-
-    owwWebSocket.on('message', (message) => {
-      ws.send(String(message));
-    });
-
-    ws.on('close', () => {
-      owwWebSocket.close();
-    });
-  });
-
-  // WebSocket forwarding
-  app.ws('/ws/relays/state', (ws, req) => {
-    
 
     ws.on('message', (message) => {
       owwWebSocket.send(message);
