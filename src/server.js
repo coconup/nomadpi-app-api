@@ -174,7 +174,7 @@ knexInstance.migrate.latest().then(() => {
     });
   });
 
-  const forwardError(error, res) => {
+  const forwardError = (error, res) => {
     if(error.response && [304, 400, 401, 404, 422].includes(error.response.status)) {
       res.status(error.response.status).send(error.response.data)
       return
