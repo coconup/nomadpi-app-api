@@ -1,7 +1,7 @@
 const express = require('express');
 const expressWs = require('express-ws');
 const WebSocket = require('ws');
-const { WsReconnect } = require('websocket-reconnect');
+import { WsReconnect } from 'websocket-reconnect';
 const axios = require('axios');
 const bodyParser = require('body-parser');
 const session = require('express-session');
@@ -194,18 +194,18 @@ knexInstance.migrate.latest().then(() => {
     'alarm'
   ].forEach(resourceName => {
     app.ws(`/ws/${resourceName}/state`, (ws, req) => {
-      const ws = new WsReconnect({ reconnectDelay: 5000 });
+      const websocket = new WsReconnect({ reconnectDelay: 5000 });
 
       const baseUrl = resourceName === 'modes' ? automationApiWsRootUrl : vanPiApiWsRootUrl;
       const url = `${baseUrl}/${resourceName}/state`;
-      ws.open(url);
+      websocket.open(url);
 
-      ws.on('open', () => {
-          console.log(`connected to ${url}`)
+      websocket.on('open', () => {
+          console.log(`${resourceName} connected to ${url}`)
       });
 
-      ws.on('reconnect', () => {
-        console.log(`reconnected to ${url}`)
+      websocket.on('reconnect', () => {
+        console.log(`${resourceName} reconnected to ${url}`)
       });
 
       ws.on('message', (message) => {
@@ -216,12 +216,12 @@ knexInstance.migrate.latest().then(() => {
         }
       });
 
-      ws.on('error', (err) => {
+      websocket.on('error', (err) => {
         console.log(`${resourceName} websocket error: ${error}`);
       });
 
-      ws.on('close', () => {
-          interval && clearInterval(interval);
+      websocket.on('close', () => {
+        console.log(`${resourceName} websocket closed`);
       });
     });
   });
