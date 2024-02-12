@@ -194,8 +194,8 @@ knexInstance.migrate.latest().then(() => {
     });
 
     openWakeWordWebsocket.on('message', (message) => {
-      console.log('MSG2', path, message.data)
-      ws.send(String(message.data));
+      console.log('MSG2', path, message)
+      ws.send(String(message));
     });
 
     ws.on('close', () => {
