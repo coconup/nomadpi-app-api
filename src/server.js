@@ -1,7 +1,7 @@
 const express = require('express');
 const expressWs = require('express-ws');
 const WebSocket = require('ws');
-import { WsReconnect } from 'websocket-reconnect';
+const { WsReconnect } = require('websocket-reconnect');
 const axios = require('axios');
 const bodyParser = require('body-parser');
 const session = require('express-session');
