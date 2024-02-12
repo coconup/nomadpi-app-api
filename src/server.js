@@ -59,30 +59,30 @@ if(Object.values(databaseConfig).find(v => !v)) {
 };
 
 // Initialize WebSockets
-const { getWss } = expressWs(app);
-const relaysStateWebsocket = new WebSocket(`${vanPiApiWsRootUrl}/relays/state`);
+// const { getWss } = expressWs(app);
+// const relaysStateWebsocket = new WebSocket(`${vanPiApiWsRootUrl}/relays/state`);
 
-// Handle incoming messages from the external WebSocket
-const handleExternalWebSocket = (externalWebSocket, path) => {
-  externalWebSocket.on('message', (message) => {
-    // Forward the message to all connected clients on the specified path
-    getWss(path).clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(message);
-      }
-    });
-  });
-};
+// // Handle incoming messages from the external WebSocket
+// const handleExternalWebSocket = (externalWebSocket, path) => {
+//   externalWebSocket.on('message', (message) => {
+//     // Forward the message to all connected clients on the specified path
+//     getWss(path).clients.forEach((client) => {
+//       if (client.readyState === WebSocket.OPEN) {
+//         client.send(message);
+//       }
+//     });
+//   });
+// };
 
-// Handle incoming messages from external WebSocket servers
-handleExternalWebSocket(relaysStateWebsocket, '/ws/relays/state');
+// // Handle incoming messages from external WebSocket servers
+// handleExternalWebSocket(relaysStateWebsocket, '/ws/relays/state');
 
-// Handle incoming messages from clients and send them to the external WebSocket
-app.ws('/ws/relays/state', (ws) => {
-  ws.on('message', (message) => {
-    relaysStateWebsocket.send(message);
-  });
-});
+// // Handle incoming messages from clients and send them to the external WebSocket
+// app.ws('/ws/relays/state', (ws) => {
+//   ws.on('message', (message) => {
+//     relaysStateWebsocket.send(message);
+//   });
+// });
 
 // Add headers before the routes are defined
 app.use(function (req, res, next) {
