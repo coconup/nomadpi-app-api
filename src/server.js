@@ -194,12 +194,11 @@ knexInstance.migrate.latest().then(() => {
     'alarm'
   ].forEach(resourceName => {
     const websocket = new WsReconnect({ reconnectDelay: 5000 });
+    const baseUrl = resourceName === 'modes' ? automationApiWsRootUrl : vanPiApiWsRootUrl;
+    const url = `${baseUrl}/${resourceName}/state`;
+    websocket.open(url);
 
     app.ws(`/ws/${resourceName}/state`, (ws, req) => {
-      const baseUrl = resourceName === 'modes' ? automationApiWsRootUrl : vanPiApiWsRootUrl;
-      const url = `${baseUrl}/${resourceName}/state`;
-      websocket.open(url);
-
       websocket.on('open', () => {
         console.log(`${resourceName} connected to ${url}`)
       });
@@ -219,8 +218,6 @@ knexInstance.migrate.latest().then(() => {
       websocket.on('close', () => {
         console.log(`${resourceName} websocket closed`);
       });
-
-      ws.on('close', () => websocket.close());
     });
   });
 
