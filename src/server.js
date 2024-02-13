@@ -272,6 +272,8 @@ knexInstance.migrate.latest().then(() => {
   };
 
   const restartMqttHub = async(res, responseData) => {
+    console.log("Restarting MQTT hub")
+
     const response = await axios({
       method: 'post',
       url: `${vanPiApiRootUrl}/mqtt_hub/restart`
@@ -604,6 +606,9 @@ knexInstance.migrate.latest().then(() => {
         }
 
         const callback = callbacks.update || callbacks.all;
+        if(resourceName === 'temperature_sensors') {
+          console.log('callback', callback)
+        }
         if(callback) {
           callback(res, decryptedResult);
         } else {
