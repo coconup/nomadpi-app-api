@@ -642,7 +642,7 @@ knexInstance.migrate.latest().then(() => {
   createCrudEndpoints('sensors', 'sensors', [], {all: restartMqttHub});
   createCrudEndpoints('cameras', 'cameras', []);
   createCrudEndpoints('heaters', 'heaters', []);
-  createCrudEndpoints('temperature_sensors', 'temperature_sensors', []);
+  createCrudEndpoints('temperature_sensors', 'temperature_sensors', [], {all: restartMqttHub});
   createCrudEndpoints('solar_charge_controllers', 'solar_charge_controllers', []);
 
   // Start the server
