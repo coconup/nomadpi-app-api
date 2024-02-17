@@ -12,11 +12,6 @@ exports.up = function(knex) {
   .then(() => {
     return knex('settings').insert([
       {
-        setting_key: 'portainer_access_token',
-        label: 'Portainer access token',
-        type: 'string'
-      },
-      {
         setting_key: 'gpsd_usb_device',
         label: 'GPS device',
         type: 'json'
@@ -61,6 +56,28 @@ exports.up = function(knex) {
       {
         setting_key: 'notifications_whatsapp_number',
         label: 'WhatsApp number',
+        type: 'string'
+      },
+      {
+        setting_key: 'cloudflare_enabled',
+        label: 'Enable Cloudflare',
+        value: 'false',
+        type: 'boolean'
+      },
+      {
+        setting_key: 'cloudflare_app_url',
+        label: 'Cloudflare app URL',
+        type: 'string'
+      },
+      {
+        setting_key: 'nextcloud_enabled',
+        label: 'Enable Nextcloud',
+        value: 'false',
+        type: 'boolean'
+      },
+      {
+        setting_key: 'nextcloud_url',
+        label: 'Nextcloud URL',
         type: 'string'
       },
     ]);

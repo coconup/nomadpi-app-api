@@ -17,6 +17,14 @@ exports.up = function (knex) {
       value as device_spec
     from settings
     where setting_key = 'zigbee_usb_device'
+
+    union all
+
+    select
+      concat('vanpi-heater-', vendor_id, '-usb') as device_key,
+      connection_params as device_spec
+    from heaters
+    where device_type = 'usb'
   `);
 };
 

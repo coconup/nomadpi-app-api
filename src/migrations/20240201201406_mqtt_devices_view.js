@@ -15,6 +15,16 @@ exports.up = function (knex) {
     union all
 
     select
+      'temperature_sensor' as device_type,
+      null as device_subtype,
+      id as device_id,
+      json_unquote(json_extract(connection_params, '$.mqtt_topic')) as mqtt_topic
+    from temperature_sensors
+    where connection_type = 'mqtt'
+
+    union all
+
+    select
       'water_tank' as device_type,
       null as device_subtype,
       id as device_id,
