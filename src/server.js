@@ -14,10 +14,9 @@ const knex = require('knex');
 const app = express();
 const port = 3001;
 
-if(process.env.VANPI_APP_API_ENABLE_AUTHENTICATION === undefined) throw `\`$VANPI_APP_API_ENABLE_AUTHENTICATION\` is not set`;
 if(!process.env.ENCRYPTION_KEY) throw `\`$ENCRYPTION_KEY\` is not set`;
-if(!process.env.VANPI_APP_API_ALLOWED_DOMAINS) throw `\`$VANPI_APP_API_ALLOWED_DOMAINS\` is not set`;
-if(!process.env.VANPI_API_ROOT_URL) throw `\`$VANPI_API_ROOT_URL\` is not set`;
+if(!process.env.RPI_HOSTNAME) throw `\`$RPI_HOSTNAME\` is not set`;
+if(!process.env.CORE_API_ROOT_URL) throw `\`$CORE_API_ROOT_URL\` is not set`;
 if(!process.env.AUTOMATION_API_ROOT_URL) throw `\`$AUTOMATION_API_ROOT_URL\` is not set`;
 if(!process.env.BUTTERFLY_API_ROOT_URL) throw `\`$BUTTERFLY_API_ROOT_URL\` is not set`;
 if(!process.env.SERVICES_API_ROOT_URL) throw `\`$SERVICES_API_ROOT_URL\` is not set`;
@@ -27,26 +26,24 @@ if(!process.env.FRIGATE_API_ROOT_URL) throw `\`$FRIGATE_API_ROOT_URL\` is not se
 
 const [
   encryptionKey,
-  corsWhitelist,
-  vanPiApiRootUrl,
-  automationApiRootUrl,
+  raspberryPiHostname,
+  coreApiBaseUrl,
+  automationApiBaseUrl,
   butterflyApiRootUrl,
   servicesApiRootUrl,
   frigateApiRootUrl
 ] = [
   process.env.ENCRYPTION_KEY,
-  process.env.VANPI_APP_API_ALLOWED_DOMAINS,
-  process.env.VANPI_API_ROOT_URL,
-  process.env.AUTOMATION_API_ROOT_URL,
+  process.env.RPI_HOSTNAME,
+  `${process.env.CORE_API_ROOT_URL}/api/v1`,
+  `${process.env.AUTOMATION_API_ROOT_URL}/api/v1`,
   process.env.BUTTERFLY_API_ROOT_URL,
   process.env.SERVICES_API_ROOT_URL,
   process.env.FRIGATE_API_ROOT_URL
 ];
 
-const vanPiApiWsRootUrl = `${vanPiApiRootUrl.replace('https://', 'wss://').replace('http://', 'ws://')}/ws`;
-const automationApiWsRootUrl = `${automationApiRootUrl.replace('https://', 'wss://').replace('http://', 'ws://')}/ws`;
-
-const enableAuthentication = (/true/).test(process.env.VANPI_APP_API_ENABLE_AUTHENTICATION);
+const coreApiWsRootUrl = `${coreApiBaseUrl.replace('https://', 'wss://').replace('http://', 'ws://')}/ws`;
+const automationApiWsRootUrl = `${automationApiBaseUrl.replace('https://', 'wss://').replace('http://', 'ws://')}/ws`;
 
 // Fetch database credentials from environment variables
 const databaseConfig = {
@@ -63,23 +60,6 @@ if(Object.values(databaseConfig).find(v => !v)) {
 // Initialize WebSockets
 const { getWss } = expressWs(app);
 
-// Add headers before the routes are defined
-app.use(function (req, res, next) {
-  const parsedCorsWhitelist = (corsWhitelist || '').split(',').filter(s => !!s).map(s => s.trim());
-
-  if (parsedCorsWhitelist.includes(req.headers.origin)) {
-    res.setHeader('Access-Control-Allow-Origin', req.headers.origin);
-  } else {
-    console.log(`Rejected request from origin \`${req.headers.origin}\``)
-  }
-
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
-  res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type,Accept');
-  res.setHeader('Access-Control-Allow-Credentials', true);
-
-  next();
-});
-
 // Create a MySQL connection pool
 const pool = mysql.createPool(databaseConfig);
 
@@ -91,76 +71,68 @@ const knexInstance = knex(knexConfig.development);
 knexInstance.migrate.latest().then(() => {
   console.log('Migrations ran successfully.');
 
+  let isInitialized = false;
+  let cloudflareAppUrl;
+
+  function initialize() {
+    return new Promise((resolve, reject) => {
+      if (isInitialized) {
+        resolve();
+        return;
+      }
+
+      pool.query('SELECT value FROM settings WHERE setting_key = "cloudflare_app_url"', (error, results) => {
+        if (error) {
+          reject(error);
+        } else {
+          if (results.length > 0) {
+            cloudflareAppUrl = results[0].value;
+            console.log('Cloudflare App URL:', cloudflareAppUrl);
+          } else {
+            console.log('Cloudflare App URL not found in the database.');
+          }
+
+          // Set the flag to true after initialization
+          isInitialized = true;
+          resolve();
+        }
+      });
+    });
+  }
+
+  app.use(async (req, res, next) => {
+    await initialize();
+    next();
+  });
+
+  // Add headers before the routes are defined
+  app.use(async function(req, res, next) {
+    const corsWhitelist = [
+      `http://${raspberryPiHostname}:3000`,
+      `http://localhost:3000`,
+      ...cloudflareAppUrl ? [cloudflareAppUrl] : []
+    ];
+
+    if (corsWhitelist.includes(req.headers.origin)) {
+      res.setHeader('Access-Control-Allow-Origin', req.headers.origin);
+    } else {
+      console.log(`Rejected request from origin \`${req.headers.origin}\``)
+    }
+
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
+    res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type,Accept');
+    res.setHeader('Access-Control-Allow-Credentials', true);
+
+    next();
+  });
+
   // Middleware to parse JSON requests
   app.use(bodyParser.json());
-
-  // Use express-session middleware
-  app.use(
-    session({
-      secret: encryptionKey,
-      resave: false,
-      saveUninitialized: true,
-      cookie: { 
-        // domain: 'localhost'
-        // sameSite: 'none'
-        // secure: true 
-      }
-    })
-  );
-
-  // Function to encrypt data
-  function encryptData(data) {
-    const key = crypto.scryptSync(encryptionKey, 'salt', 32);
-    const iv = crypto.randomBytes(16);
-    const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
-    let encrypted = cipher.update(JSON.stringify(data), 'utf-8', 'hex');
-    encrypted += cipher.final('hex');
-    return `${iv.toString('hex')}:${encrypted}`;
-  }
-
-  // Function to decrypt data
-  function decryptData(encryptedData) {
-    const key = crypto.scryptSync(encryptionKey, 'salt', 32);
-    const [ivHex, encryptedText] = encryptedData.split(':');
-    const iv = Buffer.from(ivHex, 'hex');
-    const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
-    let decrypted = decipher.update(encryptedText, 'hex', 'utf-8');
-    decrypted += decipher.final('utf-8');
-    return JSON.parse(decrypted);
-  }
 
   function handleError(error, res) {
     console.log(JSON.stringify(error))
     return res.status(400).json({message: error.sqlMessage});
   }
-
-  // Authentication middleware
-  const authenticateUser = (req, res, next) => {
-    if (!enableAuthentication || req.session.user) {
-      next();
-    } else {
-      const { username, password } = req.body;
-
-      // Find the user by username in the database
-      pool
-        .query('SELECT * FROM users WHERE username = ?', [username], (err, results) => {
-          if(err) {
-            console.error(err);
-            res.status(500).json({ error: 'Internal Server Error' });
-          }
-
-          const user = results[0];
-
-          // Check if the user exists and verify the password
-          if (user && bcrypt.compareSync(password, user.password)) {
-            req.session.user = user; // Save user data in the session
-            next();
-          } else {
-            res.status(401).json({ error: 'Unauthorized' });
-          }
-        });
-    }
-  };
 
   // Open wake word internal websocket forwarding
   app.ws('/ws/open_wake_word', (ws, req) => {
@@ -194,7 +166,7 @@ knexInstance.migrate.latest().then(() => {
     'alarm'
   ].forEach(resourceName => {
     const websocket = new WsReconnect({ reconnectDelay: 5000 });
-    const baseUrl = resourceName === 'modes' ? automationApiWsRootUrl : vanPiApiWsRootUrl;
+    const baseUrl = resourceName === 'modes' ? automationApiWsRootUrl : coreApiWsRootUrl;
     const url = `${baseUrl}/${resourceName}/state`;
     websocket.open(url);
 
@@ -274,26 +246,26 @@ knexInstance.migrate.latest().then(() => {
   const restartMqttHub = async(res, responseData) => {
     const response = await axios({
       method: 'post',
-      url: `${vanPiApiRootUrl}/mqtt_hub/restart`
+      url: `${coreApiBaseUrl}/mqtt_hub/restart`
     });
 
     res.status(response.status).send(responseData);
   };
 
   // Switches state endpoints
-  app.post('/relays/:id/state', authenticateUser, async (req, res) => {
+  app.post('/relays/:id/state', async (req, res) => {
     toggleSwitch('relay', parseInt(req.params.id), req, res);
   });
 
-  app.post('/wifi_relays/:id/state', authenticateUser, async (req, res) => {
+  app.post('/wifi_relays/:id/state', async (req, res) => {
     toggleSwitch('wifi_relay', parseInt(req.params.id), req, res);
   });
 
-  app.post('/action_switches/:id/state', authenticateUser, async (req, res) => {
+  app.post('/action_switches/:id/state', async (req, res) => {
     toggleSwitch('action_switch', parseInt(req.params.id), req, res);
   });
 
-  app.post('/modes/:id/state', authenticateUser, async (req, res) => {
+  app.post('/modes/:id/state', async (req, res) => {
     const modeItem = await getSwitchItem('mode', parseInt(req.params.id));
     
     if(!modeItem) {
@@ -301,7 +273,7 @@ knexInstance.migrate.latest().then(() => {
     }
 
     const { mode_key } = modeItem;
-    forwardRequest(req, res, automationApiRootUrl, `/modes/${mode_key}/state`);
+    forwardRequest(req, res, automationApiBaseUrl, `/modes/${mode_key}/state`);
   });
 
   const toggleSwitch = async(switchType, switchId, req, res) => {
@@ -342,7 +314,7 @@ knexInstance.migrate.latest().then(() => {
 
       const response = await axios({
         method: 'post',
-        url: `${vanPiApiRootUrl}/relays/state`,
+        url: `${coreApiBaseUrl}/relays/state`,
         data: payload
       });
 
@@ -390,70 +362,70 @@ knexInstance.migrate.latest().then(() => {
   };
 
   // Forward endpoints to Core API
-  app.put('/settings/:setting_key', authenticateUser, async (req, res) => {
-    forwardRequest(req, res, vanPiApiRootUrl, '/settings/:setting_key')
+  app.put('/settings/:setting_key', async (req, res) => {
+    forwardRequest(req, res, coreApiBaseUrl, '/settings/:setting_key')
   });
 
-  app.post('/alarm/state', authenticateUser, async (req, res) => {
-    forwardRequest(req, res, vanPiApiRootUrl, '/alarm/state')
+  app.post('/alarm/state', async (req, res) => {
+    forwardRequest(req, res, coreApiBaseUrl, '/alarm/state')
   });
 
-  app.get('/alarm/state', authenticateUser, async (req, res) => {
-    forwardRequest(req, res, vanPiApiRootUrl, '/alarm/state')
+  app.get('/alarm/state', async (req, res) => {
+    forwardRequest(req, res, coreApiBaseUrl, '/alarm/state')
   });
 
-  app.get('/relays/state', authenticateUser, async (req, res) => {
-    forwardRequest(req, res, vanPiApiRootUrl, '/relays/state')
+  app.get('/relays/state', async (req, res) => {
+    forwardRequest(req, res, coreApiBaseUrl, '/relays/state')
   });
 
-  app.get('/usb_devices', authenticateUser, async (req, res) => {
-    forwardRequest(req, res, vanPiApiRootUrl, '/usb_devices')
+  app.get('/usb_devices', async (req, res) => {
+    forwardRequest(req, res, coreApiBaseUrl, '/usb_devices')
   });
 
-  app.get('/gps/state', authenticateUser, async (req, res) => {
-    forwardRequest(req, res, vanPiApiRootUrl, '/gps/state')
+  app.get('/gps/state', async (req, res) => {
+    forwardRequest(req, res, coreApiBaseUrl, '/gps/state')
   });
 
-  app.get('/batteries/state', authenticateUser, async (req, res) => {
-    forwardRequest(req, res, vanPiApiRootUrl, '/batteries/state')
+  app.get('/batteries/state', async (req, res) => {
+    forwardRequest(req, res, coreApiBaseUrl, '/batteries/state')
   });
 
-  app.get('/water_tanks/state', authenticateUser, async (req, res) => {
-    forwardRequest(req, res, vanPiApiRootUrl, '/water_tanks/state')
+  app.get('/water_tanks/state', async (req, res) => {
+    forwardRequest(req, res, coreApiBaseUrl, '/water_tanks/state')
   });
 
-  app.get('/temperature_sensors/state', authenticateUser, async (req, res) => {
-    forwardRequest(req, res, vanPiApiRootUrl, '/temperature_sensors/state')
+  app.get('/temperature_sensors/state', async (req, res) => {
+    forwardRequest(req, res, coreApiBaseUrl, '/temperature_sensors/state')
   });
 
-  app.get('/solar_charge_controllers/state', authenticateUser, async (req, res) => {
-    forwardRequest(req, res, vanPiApiRootUrl, '/solar_charge_controllers/state')
+  app.get('/solar_charge_controllers/state', async (req, res) => {
+    forwardRequest(req, res, coreApiBaseUrl, '/solar_charge_controllers/state')
   });
 
   // Forward endpoints to Automation API
-  app.post('/modes/:mode_key', authenticateUser, async (req, res) => {
-    forwardRequest(req, res, automationApiRootUrl, '/modes/:mode_key')
+  app.post('/modes/:mode_key', async (req, res) => {
+    forwardRequest(req, res, automationApiBaseUrl, '/modes/:mode_key')
   });
 
-  app.get('/modes/state', authenticateUser, async (req, res) => {
-    forwardRequest(req, res, automationApiRootUrl, '/modes/state')
+  app.get('/modes/state', async (req, res) => {
+    forwardRequest(req, res, automationApiBaseUrl, '/modes/state')
   });
 
   // Forward endpoints to Butterfly AI API
-  app.post('/butterfly/engine/intent', authenticateUser, async (req, res) => {
+  app.post('/butterfly/engine/intent', async (req, res) => {
     forwardRequest(req, res, butterflyApiRootUrl, '/engine/intent')
   });
 
-  app.post('/butterfly/engine/command_confirmation', authenticateUser, async (req, res) => {
+  app.post('/butterfly/engine/command_confirmation', async (req, res) => {
     forwardRequest(req, res, butterflyApiRootUrl, '/engine/command_confirmation')
   });
 
-  app.use('/butterfly/services/:serviceId/:functionName', authenticateUser, async (req, res) => {
+  app.use('/butterfly/services/:serviceId/:functionName', async (req, res) => {
     forwardRequest(req, res, butterflyApiRootUrl, '/services/:serviceId/:functionName')
   });
 
   // Forward endpoints to Frigate API
-  app.use('/frigate/*', authenticateUser, async (req, res) => {
+  app.use('/frigate/*', async (req, res) => {
     const frigateApiUrl = req.originalUrl.replace(/^\/frigate/, '/api');
 
     // https://github.com/blakeblackshear/frigate/blob/dev/frigate/http.py#L86
@@ -474,69 +446,43 @@ knexInstance.migrate.latest().then(() => {
   });
 
   // Forward endpoints to Services API
-  app.get('/services/credentials/service/:service_id', authenticateUser, async (req, res) => {
+  app.get('/services/credentials/service/:service_id', async (req, res) => {
     forwardRequest(req, res, servicesApiRootUrl, '/credentials/service/:service_id')
   });
 
-  app.put('/services/credentials/:id', authenticateUser, async (req, res) => {
+  app.put('/services/credentials/:id', async (req, res) => {
     forwardRequest(req, res, servicesApiRootUrl, '/credentials/:id')
   });
 
-  app.use('/services/credentials', authenticateUser, async (req, res) => {
+  app.use('/services/credentials', async (req, res) => {
     forwardRequest(req, res, servicesApiRootUrl, '/credentials')
   });
 
-  app.use('/services/:serviceId/:endpoint', authenticateUser, async (req, res) => {
+  app.use('/services/:serviceId/:endpoint', async (req, res) => {
     forwardRequest(req, res, servicesApiRootUrl, '/services/:serviceId/:endpoint')
   });
 
-  // Auth routes
-  app.get('/auth/status', authenticateUser, (req, res) => {
-    if(enableAuthentication) {
-      res.json({ message: 'ok' });  
-    } else {
-      res.status(404).json({ error: 'Not found' });
-    }
-  });
-
-  app.post('/auth/login', authenticateUser, (req, res) => {
-    if(enableAuthentication) {
-      res.json({ message: 'ok' });  
-    } else {
-      res.status(404).json({ error: 'Not found' });
-    }
-  });
-
   // Settings endpoints
-  app.get(`/settings`, authenticateUser, (req, res) => {
+  app.get(`/settings`, (req, res) => {
     pool.query(`SELECT * FROM settings`, (err, results) => {
       if (err) return handleError(err, res);
       res.json(results);
     });
   });
 
-  // Generic CRUD function with encryption/decryption option
-  function createCrudEndpoints(resourceName, tableName, encryptedAttributes = [], callbacks={}) {
+  // Generic CRUD function
+  function createCrudEndpoints(resourceName, tableName, callbacks={}) {
     // Get all resources
-    app.get(`/${resourceName}`, authenticateUser, (req, res) => {
+    app.get(`/${resourceName}`, (req, res) => {
       pool.query(`SELECT * FROM ${tableName}`, (err, results) => {
         if (err) return handleError(err, res);
 
-        const decryptedResults = results.map(result => {
-          if (encryptedAttributes.length > 0) {
-            encryptedAttributes.forEach(attr => {
-              result[attr] = decryptData(result[attr]);
-            });
-          }
-          return result;
-        });
-
-        res.json(decryptedResults);
+        res.json(results);
       });
     });
 
     // Get a specific resource by ID
-    app.get(`/${resourceName}/:id`, authenticateUser, (req, res) => {
+    app.get(`/${resourceName}/:id`, (req, res) => {
       const resourceId = parseInt(req.params.id);
 
       pool.query(`SELECT * FROM ${tableName} WHERE id = ?`, [resourceId], (err, results) => {
@@ -546,78 +492,47 @@ knexInstance.migrate.latest().then(() => {
           return res.status(404).json({ error: `${resourceName} not found` });
         }
 
-        const decryptedResult = results[0];
-
-        if (encryptedAttributes.length > 0) {
-          encryptedAttributes.forEach(attr => {
-            decryptedResult[attr] = decryptData(decryptedResult[attr]);
-          });
-        }
-
-        res.json(decryptedResult);
+        res.json(results[0]);
       });
     });
 
     // Create a new resource
-    app.post(`/${resourceName}`, authenticateUser, (req, res) => {
+    app.post(`/${resourceName}`, (req, res) => {
       const newResource = req.body;
-
-      // Encrypt specified attributes
-      if (encryptedAttributes.length > 0) {
-        encryptedAttributes.forEach(attr => {
-          newResource[attr] = encryptData(newResource[attr]);
-        });
-      }
 
       pool.query(`INSERT INTO ${tableName} SET ?`, newResource, (err, results) => {
         if (err) return handleError(err, res);
 
         newResource.id = results.insertId;
 
-        // Return the decrypted result
-        const decryptedResult = { ...newResource };
-        if (encryptedAttributes.length > 0) {
-          encryptedAttributes.forEach(attr => {
-            decryptedResult[attr] = decryptData(decryptedResult[attr]);
-          });
-        }
-
         const callback = callbacks.create || callbacks.all;
         if(callback) {
-          callback(res, decryptedResult);
+          callback(res, newResource);
         } else {
-          res.status(201).json(decryptedResult);
+          res.status(201).json(newResource);
         }
       });
     });
 
     // Update a resource by ID
-    app.put(`/${resourceName}/:id`, authenticateUser, (req, res) => {
+    app.put(`/${resourceName}/:id`, (req, res) => {
       const resourceId = parseInt(req.params.id);
       const updatedResource = req.body;
 
       pool.query(`UPDATE ${tableName} SET ? WHERE id = ?`, [updatedResource, resourceId], (err) => {
         if (err) return handleError(err, res);
-
-        // Return the decrypted result
-        const decryptedResult = { ...updatedResource };
-        if (encryptedAttributes.length > 0) {
-          encryptedAttributes.forEach(attr => {
-            decryptedResult[attr] = decryptData(decryptedResult[attr]);
-          });
-        }
-
+        
         const callback = callbacks.update || callbacks.all;
         if(callback) {
-          callback(res, decryptedResult);
+          callback(res, updatedResource);
         } else {
-          res.status(201).json(decryptedResult);
+          res.status(201).json(updatedResource);
         }
       });
     });
 
     // Delete a resource by ID
-    app.delete(`/${resourceName}/:id`, authenticateUser, (req, res) => {
+    app.delete(`/${resourceName}/:id`, (req, res) => {
       const resourceId = parseInt(req.params.id);
 
       pool.query(`DELETE FROM ${tableName} WHERE id = ?`, resourceId, (err) => {
@@ -636,18 +551,18 @@ knexInstance.migrate.latest().then(() => {
   }
 
   // Create CRUD endpoints
-  createCrudEndpoints('relays', 'relays', []);
-  createCrudEndpoints('wifi_relays', 'wifi_relays', []);
-  createCrudEndpoints('modes', 'modes', []);
-  createCrudEndpoints('action_switches', 'action_switches', []);
-  createCrudEndpoints('switch_groups', 'switch_groups', []);
-  createCrudEndpoints('batteries', 'batteries', []);
-  createCrudEndpoints('water_tanks', 'water_tanks', [], {all: restartMqttHub});
-  createCrudEndpoints('sensors', 'sensors', [], {all: restartMqttHub});
-  createCrudEndpoints('cameras', 'cameras', []);
-  createCrudEndpoints('heaters', 'heaters', []);
-  createCrudEndpoints('temperature_sensors', 'temperature_sensors', [], {all: restartMqttHub});
-  createCrudEndpoints('solar_charge_controllers', 'solar_charge_controllers', []);
+  createCrudEndpoints('relays', 'relays');
+  createCrudEndpoints('wifi_relays', 'wifi_relays');
+  createCrudEndpoints('modes', 'modes');
+  createCrudEndpoints('action_switches', 'action_switches');
+  createCrudEndpoints('switch_groups', 'switch_groups');
+  createCrudEndpoints('batteries', 'batteries');
+  createCrudEndpoints('water_tanks', 'water_tanks', {all: restartMqttHub});
+  createCrudEndpoints('sensors', 'sensors', {all: restartMqttHub});
+  createCrudEndpoints('cameras', 'cameras');
+  createCrudEndpoints('heaters', 'heaters');
+  createCrudEndpoints('temperature_sensors', 'temperature_sensors', {all: restartMqttHub});
+  createCrudEndpoints('solar_charge_controllers', 'solar_charge_controllers');
 
   // Start the server
   app.listen(port, () => {

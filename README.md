@@ -6,11 +6,7 @@ This Express server serves as the backend for the [VanPi React Frontend](https:/
 
 Ensure the following environment variables are set before running the server, preferably through `direnv` as part of the [VanPi Docker Stack](https://github.com/coconup/vanpi-docker-stack):
 
-* `VANPI_APP_API_ENABLE_AUTHENTICATION`: Set to `true` to enable authentication.
 * `ENCRYPTION_KEY`: Encryption key for securing sensitive data.
-* `VANPI_APP_API_ALLOWED_DOMAINS`: Comma-separated list of allowed CORS origins.
-* `VANPI_API_ROOT_URL`: Root URL for the VanPi API.
-* `AUTOMATION_API_ROOT_URL`: Root URL for the Automation API.
 * `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`: Database connection details.
 
 ## Getting Started
@@ -21,7 +17,6 @@ Ensure the following environment variables are set before running the server, pr
 
 ## Features
 
-* **Authentication:** Enabled when `VANPI_APP_API_ENABLE_AUTHENTICATION` is `true`.
 * **CORS:** Headers set based on allowed domains in `VANPI_APP_API_ALLOWED_DOMAINS`.
 * **Forwarding Endpoints:** Specific routes forwarded to Van Pi core and Automation APIs.
 * **Encryption:** Sensitive data in the database encrypted and decrypted using `ENCRYPTION_KEY`.
@@ -37,9 +32,6 @@ Ensure the following environment variables are set before running the server, pr
 * **VanPi Automation API:**
   * `POST /modes/:mode_key`
   * `GET /modes/state`
-* **Authentication:**
-  * `GET /auth/status`
-  * `POST /auth/login`
 * **Settings:**
   * `GET /settings`
   * `PUT /settings/:setting_key`
