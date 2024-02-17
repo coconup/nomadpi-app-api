@@ -363,6 +363,7 @@ knexInstance.migrate.latest().then(() => {
 
   // Forward endpoints to Core API
   app.put('/settings/:setting_key', async (req, res) => {
+    isInitialized = false;
     forwardRequest(req, res, coreApiBaseUrl, '/settings/:setting_key')
   });
 
