@@ -113,11 +113,11 @@ knexInstance.migrate.latest().then(() => {
       ...cloudflareAppUrl ? [cloudflareAppUrl] : []
     ];
 
-    if (corsWhitelist.includes(req.headers.origin)) {
+    // if (corsWhitelist.includes(req.headers.origin)) {
       res.setHeader('Access-Control-Allow-Origin', req.headers.origin);
-    } else {
-      console.log(`Rejected request from origin \`${req.headers.origin}\``)
-    }
+    // } else {
+    //   console.log(`Rejected request from origin \`${req.headers.origin}\``)
+    // }
 
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
     res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type,Accept');

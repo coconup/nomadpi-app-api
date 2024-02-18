@@ -76,9 +76,21 @@ exports.up = function(knex) {
         type: 'boolean'
       },
       {
-        setting_key: 'nextcloud_url',
+        setting_key: 'nextcloud_host',
         label: 'Nextcloud URL',
         type: 'string'
+      },
+      {
+        setting_key: 'appearance_primary_color',
+        label: 'Primary color',
+        type: 'string',
+        value: '#ef5350'
+      },
+      {
+        setting_key: 'appearance_display_name',
+        label: 'Display name',
+        type: 'string',
+        value: 'Lara'
       },
     ]);
   });;
