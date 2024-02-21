@@ -90,7 +90,7 @@ exports.up = function(knex) {
         setting_key: 'appearance_display_name',
         label: 'Display name',
         type: 'string',
-        value: 'Lara'
+        value: 'nomadPi'
       },
     ]);
   });;

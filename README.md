@@ -1,17 +1,17 @@
-# VanPi App API
+# nomadPi App API
 
-This Express server serves as the backend for the [VanPi React Frontend](https://github.com/coconup/vanpi-react). It provides the needed functionality to handle resources (Switches, batteries, settings etc.) and it also acts as an intermediary to the more low-level APIs [VanPi core](https://github.com/coconup/vanpi-core-api) and [VanPi automation](https://github.com/coconup/vanpi-automation-api).
+This Express server serves as the backend for the [nomadPi React Frontend](https://github.com/coconup/nomadpi-react). It provides the needed functionality to handle resources (Switches, batteries, settings etc.) and it also acts as an intermediary to the more low-level APIs [nomadPi core](https://github.com/coconup/nomadpi-core-api) and [nomadPi automation](https://github.com/coconup/nomadpi-automation-api).
 
 ## Prerequisites
 
-Ensure the following environment variables are set before running the server, preferably through `direnv` as part of the [VanPi Docker Stack](https://github.com/coconup/vanpi-docker-stack):
+Ensure the following environment variables are set before running the server, preferably through `direnv` as part of the [nomadPi Docker Stack](https://github.com/coconup/nomadpi-docker-stack):
 
 * `ENCRYPTION_KEY`: Encryption key for securing sensitive data.
 * `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`: Database connection details.
 
 ## Getting Started
 
-1. Within your [VanPi Docker Stack](https://github.com/coconup/vanpi-docker-stack), clone the repository under `volumes`.
+1. Within your [nomadPi Docker Stack](https://github.com/coconup/nomadpi-docker-stack), clone the repository under `volumes`.
 
 2. Start the `docker-compose` stack and access the server at http://raspberrypi.local:3001 (assuming `raspberrypi` is the host you set for your Pi).
 
@@ -24,12 +24,12 @@ Ensure the following environment variables are set before running the server, pr
 
 ## Endpoints
 
-* **VanPi core API:**
+* **nomadPi core API:**
   * `POST /relays/state`
   * `GET /relays/state`
   * `GET /usb_devices`
   * `GET /batteries/:connection_type/:device_type/:device_id/state`
-* **VanPi Automation API:**
+* **nomadPi Automation API:**
   * `POST /modes/:mode_key`
   * `GET /modes/state`
 * **Settings:**

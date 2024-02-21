@@ -21,7 +21,7 @@ exports.up = function (knex) {
     union all
 
     select
-      concat('vanpi-heater-', vendor_id, '-usb') as device_key,
+      concat('nomadpi-heater-', vendor_id, '-usb') as device_key,
       connection_params as device_spec
     from heaters
     where device_type = 'usb'
