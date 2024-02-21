@@ -138,7 +138,8 @@ knexInstance.migrate.latest().then(() => {
 
   // Open wake word internal websocket forwarding
   app.ws('/ws/open_wake_word', (ws, req) => {
-    const openWakeWordWebsocket = new WebSocket('ws://localhost:9002/ws');
+    const openWakeWordWebsocket = new WsReconnect({ reconnectDelay: 5000 });
+    openWakeWordWebsocket.open('ws://localhost:9002/ws');
 
     ws.on('message', (message) => {
       try {
