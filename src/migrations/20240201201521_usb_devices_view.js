@@ -18,13 +18,13 @@ exports.up = function (knex) {
     from settings
     where setting_key = 'zigbee_usb_device'
 
-    union all
+    --  union all
 
-    select
-      concat('nomadpi-heater-', vendor_id, '-usb') as device_key,
-      connection_params as device_spec
-    from heaters
-    where device_type = 'usb'
+    --  select
+    --    concat('nomadpi-heater-', vendor_id, '-usb') as device_key,
+    --    connection_params as device_spec
+    --  from heaters
+    --  where connection_type = 'usb'
   `);
 };
 
