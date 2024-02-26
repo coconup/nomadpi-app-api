@@ -206,10 +206,11 @@ knexInstance.migrate.latest().then(() => {
     if(error.response) {
       console.error(`Status`, error.response.status);
       if(error.response.data) console.error(error.response.data);
-    }
-    
-    console.error(error);
+    } else {
+      console.error(error)
+    };
 
+    
     res.status(500).send('Internal Server Error');
   }
 
