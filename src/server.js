@@ -153,8 +153,16 @@ knexInstance.migrate.latest().then(() => {
       ws.send(String(message));
     });
 
+    openWakeWordWebsocket.on('open', () => {
+      console.log(`connected to open_wake_word`)
+    });
+
     ws.on('close', () => {
-      openWakeWordWebsocket.close();
+      try:
+        openWakeWordWebsocket.close();
+      catch(error) {
+
+      }
     });
   });
 
