@@ -21,6 +21,7 @@ if(!process.env.AUTOMATION_API_ROOT_URL) throw `\`$AUTOMATION_API_ROOT_URL\` is 
 if(!process.env.BUTTERFLY_API_ROOT_URL) throw `\`$BUTTERFLY_API_ROOT_URL\` is not set`;
 if(!process.env.SERVICES_API_ROOT_URL) throw `\`$SERVICES_API_ROOT_URL\` is not set`;
 if(!process.env.FRIGATE_API_ROOT_URL) throw `\`$FRIGATE_API_ROOT_URL\` is not set`;
+if(!process.env.OPEN_WAKE_WORD_WS_URL) throw `\`$OPEN_WAKE_WORD_WS_URL\` is not set`;
 
 // Set constants
 
@@ -31,7 +32,8 @@ const [
   automationApiBaseUrl,
   butterflyApiRootUrl,
   servicesApiRootUrl,
-  frigateApiRootUrl
+  frigateApiRootUrl,
+  openWakeWordWsUrl
 ] = [
   process.env.ENCRYPTION_KEY,
   process.env.RPI_HOSTNAME,
@@ -139,7 +141,7 @@ knexInstance.migrate.latest().then(() => {
   // Open wake word internal websocket forwarding
   app.ws('/ws/open_wake_word', (ws, req) => {
     const openWakeWordWebsocket = new WsReconnect({ reconnectDelay: 5000 });
-    openWakeWordWebsocket.open('ws://localhost:9002/ws');
+    openWakeWordWebsocket.open(openWakeWordWsUrl);
 
     ws.on('message', (message) => {
       try {
