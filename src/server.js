@@ -161,9 +161,10 @@ knexInstance.migrate.latest().then(() => {
 
     ws.on('close', () => {
       try {
+        console.log(`closing connection with open_wake_word`)
         openWakeWordWebsocket.close();
       } catch(error) {
-
+        console.log(`error closing connection with open_wake_word`)
       }
     });
   });
