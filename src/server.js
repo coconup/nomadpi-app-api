@@ -41,7 +41,8 @@ const [
   `${process.env.AUTOMATION_API_ROOT_URL}/api/v1`,
   process.env.BUTTERFLY_API_ROOT_URL,
   process.env.SERVICES_API_ROOT_URL,
-  process.env.FRIGATE_API_ROOT_URL
+  process.env.FRIGATE_API_ROOT_URL,
+  process.env.OPEN_WAKE_WORD_WS_URL
 ];
 
 const coreApiWsRootUrl = `${coreApiBaseUrl.replace('https://', 'wss://').replace('http://', 'ws://')}/ws`;
@@ -140,6 +141,7 @@ knexInstance.migrate.latest().then(() => {
 
   // Open wake word internal websocket forwarding
   app.ws('/ws/open_wake_word', (ws, req) => {
+    console.log(`connecting to open_wake_word`)
     const openWakeWordWebsocket = new WsReconnect({ reconnectDelay: 5000 });
     openWakeWordWebsocket.open(openWakeWordWsUrl);
 
