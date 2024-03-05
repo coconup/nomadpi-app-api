@@ -84,7 +84,7 @@ exports.up = function(knex) {
         setting_key: 'appearance_primary_color',
         label: 'Primary color',
         type: 'string',
-        value: '#ef5350'
+        value: '#19535F'
       },
       {
         setting_key: 'appearance_display_name',
