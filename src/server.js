@@ -172,7 +172,7 @@ knexInstance.migrate.latest().then(() => {
   });
 
   [
-    'relays',
+    'switchables',
     'modes',
     'gps',
     'batteries',
