@@ -195,7 +195,7 @@ knexInstance.migrate.latest().then(() => {
     });
     
     websocket.on('error', (err) => {
-      console.log(`${resourceName} websocket error: ${error}`);
+      console.log(`${resourceName} websocket error: ${err}`);
     });
 
     websocket.on('close', () => {
