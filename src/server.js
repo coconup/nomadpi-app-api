@@ -305,15 +305,15 @@ knexInstance.migrate.latest().then(() => {
     }
 
     try {
-      const switchItem = await getSwitchItem(switchType, switchId);
+      const switchItem = await getSwitchItem(switchableType, switchableId);
     
       if(!switchItem) {
-        return res.status(404).json({ error: `${switchType} not found` });
+        return res.status(404).json({ error: `${switchableType} not found` });
       }
 
       let payload;
 
-      if(switchType === 'action_switch') {
+      if(switchableType === 'action_switch') {
         const switches = JSON.parse(switchItem.switches);
 
         payload = await Promise.all(
