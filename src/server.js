@@ -294,7 +294,7 @@ knexInstance.migrate.latest().then(() => {
     forwardRequest(req, res, automationApiBaseUrl, `/modes/${mode_key}/state`);
   });
 
-  const toggleSwitch = async(switchType, switchId, req, res) => {
+  const toggleSwitch = async(switchableType, switchableId, req, res) => {
     const {
       actor, 
       state
@@ -313,26 +313,24 @@ knexInstance.migrate.latest().then(() => {
 
       let payload;
 
-      if(['relay', 'wifi_relay'].includes(switchType)) {
-        payload = [ relayStatePayload(switchType, switchItem, actor, state) ];
-      } else if(switchType === 'action_switch') {
+      if(switchType === 'action_switch') {
         const switches = JSON.parse(switchItem.switches);
 
         payload = await Promise.all(
-          switches.map(async ({switch_type: relayType, switch_id: relayId, on_state}) => {
-            const relayItem = await getSwitchItem(relayType, relayId);
-
+          switches.map(async ({switch_type, switch_id, on_state}) => {
             return {
-              ...relayStatePayload(relayType, relayItem, actor, state),
+              ...switchableStatePayload(switch_type, switch_id, actor, state),
               ...state ? {state: on_state} : {}
             }
           })
         )
+      } else {
+        payload = [ switchableStatePayload(switchableType, switchableId, actor, state) ];
       };
 
       const response = await axios({
         method: 'post',
-        url: `${coreApiBaseUrl}/relays/state`,
+        url: `${coreApiBaseUrl}/switchables/state`,
         data: payload
       });
 
@@ -361,18 +359,10 @@ knexInstance.migrate.latest().then(() => {
     });
   };
 
-  const relayStatePayload = (relayType, relayItem, actor, state) => {
-    const {
-      relay_position,
-    } = relayItem;
-
+  const switchableStatePayload = (switchableType, switchableId, actor, state) => {
     return {
-      relay_type: relayType,
-      ...relayType === 'wifi_relay' ? {
-        vendor_id: relayItem.vendor_id,
-        mqtt_topic: relayItem.mqtt_topic
-      } : {},
-      relay_position,
+      switchable_type: switchableType,
+      switchable_id: switchableId,
       actor,
       mode: state ? 'subscribe' : 'unsubscribe',
       ...state ? {state: true} : {}
@@ -393,8 +383,8 @@ knexInstance.migrate.latest().then(() => {
     forwardRequest(req, res, coreApiBaseUrl, '/alarm/state')
   });
 
-  app.get('/relays/state', async (req, res) => {
-    forwardRequest(req, res, coreApiBaseUrl, '/relays/state')
+  app.get('/switchables/state', async (req, res) => {
+    forwardRequest(req, res, coreApiBaseUrl, '/switchables/state')
   });
 
   app.get('/usb_devices', async (req, res) => {
