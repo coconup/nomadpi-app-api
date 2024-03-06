@@ -186,25 +186,25 @@ knexInstance.migrate.latest().then(() => {
     const url = `${baseUrl}/${resourceName}/state`;
     websocket.open(url);
 
-    app.ws(`/ws/${resourceName}/state`, (ws, req) => {
-      websocket.on('open', () => {
+    websocket.on('open', () => {
         console.log(`${resourceName} connected to ${url}`)
-      });
+    });
 
-      websocket.on('reconnect', () => {
-        console.log(`${resourceName} reconnected to ${url}`)
-      });
+    websocket.on('reconnect', () => {
+      console.log(`${resourceName} reconnected to ${url}`)
+    });
+    
+    websocket.on('error', (err) => {
+      console.log(`${resourceName} websocket error: ${error}`);
+    });
 
+    websocket.on('close', () => {
+      console.log(`${resourceName} websocket closed`);
+    });
+
+    app.ws(`/ws/${resourceName}/state`, (ws, req) => {
       websocket.on('message', (message) => {
         ws.send(String(message));
-      });
-
-      websocket.on('error', (err) => {
-        console.log(`${resourceName} websocket error: ${error}`);
-      });
-
-      websocket.on('close', () => {
-        console.log(`${resourceName} websocket closed`);
       });
     });
   });
