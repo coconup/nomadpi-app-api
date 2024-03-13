@@ -369,6 +369,10 @@ knexInstance.migrate.latest().then(() => {
     }
   };
 
+  app.get(`/status`, (req, res) => {
+    res.json({status: 'ok'});
+  });
+
   // Forward endpoints to Core API
   app.put('/settings/:setting_key', async (req, res) => {
     isInitialized = false;
